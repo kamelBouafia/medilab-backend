@@ -36,6 +36,9 @@ public class JwtFilter extends OncePerRequestFilter {
                 Claims claims = jwtUtil.extractAllClaims(jwt);
                 subject = claims.getSubject(); // This is still a String as per UserDetails
                 userId = claims.get("userId", Long.class);
+                if (userId == null) {
+                    userId = claims.get("patientId", Long.class);
+                }
                 labId = claims.get("labId", Long.class);
                 role = claims.get("role", String.class);
             } catch (Exception e) {
