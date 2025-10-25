@@ -1,44 +1,59 @@
 package com.medilab.service;
 
+import com.medilab.dto.RequisitionDto;
 import com.medilab.entity.Requisition;
-import com.medilab.entity.RequisitionTest;
-import com.medilab.repository.RequisitionRepository;
-import com.medilab.repository.RequisitionTestRepository;
+import com.medilab.mapper.RequisitionMapper;
+import com.medilab.repository.*;
+import com.medilab.security.AuthenticatedUser;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class RequisitionService {
-    private final RequisitionRepository reqRepo;
-    private final RequisitionTestRepository rtRepo;
-    private final AuditService auditService;
 
-    public RequisitionService(RequisitionRepository reqRepo, RequisitionTestRepository rtRepo, AuditService auditService) {
-        this.reqRepo = reqRepo;
-        this.rtRepo = rtRepo;
-        this.auditService = auditService;
+    @Autowired
+    private RequisitionRepository requisitionRepository;
+
+    @Autowired
+    private PatientRepository patientRepository;
+
+    @Autowired
+    private StaffUserRepository staffUserRepository;
+
+    @Autowired
+    private LabRepository labRepository;
+
+    @Autowired
+    private LabTestRepository labTestRepository;
+
+    @Autowired
+    private RequisitionMapper requisitionMapper;
+
+    public List<RequisitionDto> getRequisitions() {
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return requisitionRepository.findByLabId(user.getLabId()).stream()
+                .map(requisitionMapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public Requisition create(String id, String patientId, String doctorName, String createdById, String labId, List<String> tests) {
-        Requisition r = Requisition.builder()
-                .id(id)
-                .patientId(patientId)
-                .doctorName(doctorName)
-                .date(OffsetDateTime.now())
-                .status("Collected")
-                .createdById(createdById)
-                .labId(labId)
-                .build();
-        reqRepo.save(r);
-        for (String t : tests) {
-            RequisitionTest rt = RequisitionTest.builder().requisitionId(id).testId(t).labId(labId).build();
-            rtRepo.save(rt);
+    public RequisitionDto createRequisition(RequisitionDto requisitionDto) {
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Requisition requisition = requisitionMapper.toEntity(requisitionDto);
+
+        patientRepository.findById(requisitionDto.getPatientId()).ifPresent(requisition::setPatient);
+        labRepository.findById(user.getLabId()).ifPresent(requisition::setLab);
+        staffUserRepository.findById(user.getUserId()).ifPresent(requisition::setCreatedBy);
+
+        if (requisitionDto.getTestIds() != null) {
+            requisition.setTests(new HashSet<>(labTestRepository.findAllById(requisitionDto.getTestIds())));
         }
-        auditService.log(createdById, "Create Requisition", "Requisition "+id+" for patient " + patientId, labId);
-        return r;
-    }
 
-    public List<Requisition> findAllByLab(String labId){ return reqRepo.findAllByLabId(labId); }
+        Requisition savedRequisition = requisitionRepository.save(requisition);
+        return requisitionMapper.toDto(savedRequisition);
+    }
 }

@@ -1,61 +1,40 @@
 package com.medilab.controller;
 
-import com.medilab.config.JwtUtil;
-import com.medilab.entity.Patient;
-import com.medilab.entity.StaffUser;
-import com.medilab.repository.PatientRepository;
-import com.medilab.repository.StaffUserRepository;
+import com.medilab.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
+import java.time.LocalDate;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final StaffUserRepository staffRepo;
-    private final PatientRepository patientRepo;
-    private final JwtUtil jwtUtil;
-
-    public AuthController(StaffUserRepository staffRepo, PatientRepository patientRepo, JwtUtil jwtUtil) {
-        this.staffRepo = staffRepo;
-        this.patientRepo = patientRepo;
-        this.jwtUtil = jwtUtil;
-    }
+    @Autowired
+    private AuthService authService;
 
     @PostMapping("/staff/login")
-    public ResponseEntity<?> staffLogin(@RequestBody Map<String, String> body) {
-        String labId = body.get("labId");
-        String userId = body.get("userId");
-        var userOpt = staffRepo.findById(userId);
-        if (userOpt.isEmpty() || !userOpt.get().getLabId().equals(labId)) return ResponseEntity.status(401).build();
-        StaffUser user = userOpt.get();
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", user.getId());
-        claims.put("name", user.getName());
-        claims.put("role", user.getRole().name());
-        claims.put("labId", user.getLabId());
-        String token = jwtUtil.generateToken(claims, 24 * 3600 * 1000L);
-        return ResponseEntity.ok(Map.of("token", token));
+    public ResponseEntity<?> staffLogin(@RequestBody Map<String, String> credentials) {
+        Long labId = Long.parseLong(credentials.get("labId"));
+        Long userId = Long.parseLong(credentials.get("userId"));
+        return authService.staffLogin(labId, userId)
+                .map(token -> ResponseEntity.ok(Map.of("token", token)))
+                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
     @PostMapping("/patient/login")
-    public ResponseEntity<?> patientLogin(@RequestBody Map<String, String> body) {
-        String labId = body.get("labId");
-        String patientId = body.get("patientId");
-        var dob = body.get("dob");
-        var pOpt = patientRepo.findById(patientId);
-        if (pOpt.isEmpty() || !pOpt.get().getLabId().equals(labId)) return ResponseEntity.status(401).build();
-        Patient p = pOpt.get();
-        if (!p.getDob().toString().equals(dob)) return ResponseEntity.status(401).build();
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("patientId", p.getId());
-        claims.put("name", p.getName());
-        claims.put("labId", p.getLabId());
-        claims.put("role", "patient");
-        String token = jwtUtil.generateToken(claims, 24 * 3600 * 1000L);
-        return ResponseEntity.ok(Map.of("token", token));
+    public ResponseEntity<?> patientLogin(@RequestBody Map<String, String> credentials) {
+        Long labId = Long.parseLong(credentials.get("labId"));
+        Long patientId = Long.parseLong(credentials.get("patientId"));
+        LocalDate dob = LocalDate.parse(credentials.get("dob"));
+        return authService.patientLogin(labId, patientId, dob)
+                .map(token -> ResponseEntity.ok(Map.of("token", token)))
+                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 }

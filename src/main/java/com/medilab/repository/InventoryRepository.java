@@ -4,6 +4,6 @@ import com.medilab.entity.InventoryItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
-public interface InventoryRepository extends JpaRepository<InventoryItem, String> {
-    List<InventoryItem> findAllByLabId(String labId);
+public interface InventoryRepository extends JpaRepository<InventoryItem, Long> {
+    List<InventoryItem> findAllByLabId(Long labId);
 }

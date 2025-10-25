@@ -1,6 +1,6 @@
 package com.medilab.controller;
 
-import com.medilab.dto.StaffUserDTO;
+import com.medilab.dto.StaffUserDto;
 import com.medilab.entity.StaffUser;
 import com.medilab.mapper.StaffUserMapper;
 import com.medilab.service.AuditService;
@@ -24,9 +24,9 @@ public class StaffController {
     private final StaffUserMapper staffUserMapper;
 
     @GetMapping("/staff-init/{labId}")
-    public ResponseEntity<List<StaffUserDTO>> staffInit(@PathVariable String labId) {
+    public ResponseEntity<List<StaffUserDto>> staffInit(@PathVariable Long labId) {
         List<StaffUser> staffList = staffService.findAllByLab(labId);
-        List<StaffUserDTO> dtoList = staffUserMapper.toDTOs(staffList);
+        List<StaffUserDto> dtoList = staffUserMapper.toDTOs(staffList);
         return ResponseEntity.ok(dtoList);
     }
 

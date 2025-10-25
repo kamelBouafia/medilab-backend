@@ -1,20 +1,43 @@
 package com.medilab.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "audit_log")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class AuditLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private OffsetDateTime timestamp;
-    private String userId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "userId", nullable = false)
+    private StaffUser user;
+
     private String action;
-    @Column(length = 4000)
+
+    @Lob
     private String details;
-    private String labId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "labId", nullable = false)
+    private Lab lab;
 }

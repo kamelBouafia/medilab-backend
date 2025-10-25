@@ -1,31 +1,31 @@
 package com.medilab.controller;
 
-import com.medilab.entity.RequisitionTest;
-import com.medilab.service.TestRequisitionService;
+import com.medilab.dto.RequisitionDto;
+import com.medilab.service.RequisitionService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/requisitions")
+@PreAuthorize("hasRole('Staff')")
 public class RequisitionController {
 
-    private final TestRequisitionService testRequisitionService;
-
     @Autowired
-    public RequisitionController(TestRequisitionService testRequisitionService) {
-        this.testRequisitionService = testRequisitionService;
-    }
+    private RequisitionService requisitionService;
 
     @GetMapping
-    public ResponseEntity<List<RequisitionTest>> getRequisitions() {
-        return ResponseEntity.ok(testRequisitionService.getAllRequisitions());
+    public ResponseEntity<List<RequisitionDto>> getRequisitions() {
+        return ResponseEntity.ok(requisitionService.getRequisitions());
     }
 
     @PostMapping
-    public ResponseEntity<RequisitionTest> addRequisition(@RequestBody RequisitionTest testRequisition) {
-        return ResponseEntity.ok(testRequisitionService.addRequisition(testRequisition));
+    public ResponseEntity<RequisitionDto> createRequisition(@RequestBody RequisitionDto requisitionDto) {
+        RequisitionDto createdRequisition = requisitionService.createRequisition(requisitionDto);
+        return new ResponseEntity<>(createdRequisition, HttpStatus.CREATED);
     }
 }

@@ -1,14 +1,20 @@
 package com.medilab.mapper;
 
-import com.medilab.dto.StaffUserDTO;
+import com.medilab.dto.StaffUserDto;
 import com.medilab.entity.StaffUser;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface StaffUserMapper {
-    StaffUserDTO toDTO(StaffUser entity);
 
-    List<StaffUserDTO> toDTOs(List<StaffUser> entities);
+    @Mapping(source = "lab.id", target = "labId")
+    StaffUserDto toDto(StaffUser staffUser);
+
+    List<StaffUserDto> toDtoList(List<StaffUser> staffUsers);
+
+    // Added to explicitly address the error message if it's looking for this exact method name
+    List<StaffUserDto> toDTOs(List<StaffUser> staffUsers);
 }

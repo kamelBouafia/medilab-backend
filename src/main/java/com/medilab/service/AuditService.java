@@ -15,10 +15,10 @@ public class AuditService {
     public void log(String userId, String action, String details, String labId) {
         AuditLog entry = AuditLog.builder()
                 .timestamp(OffsetDateTime.now())
-                .userId(userId)
+//                .userId(userId)
                 .action(action)
                 .details(details)
-                .labId(labId)
+//                .labId(labId)
                 .build();
         repo.save(entry);
     }
