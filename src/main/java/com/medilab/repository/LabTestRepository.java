@@ -2,8 +2,8 @@ package com.medilab.repository;
 
 import com.medilab.entity.LabTest;
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.List;
+import org.springframework.stereotype.Repository;
 
-public interface LabTestRepository extends JpaRepository<LabTest, String> {
-    List<LabTest> findAllByLabId(String labId);
+@Repository
+public interface LabTestRepository extends JpaRepository<LabTest, Long> {
 }

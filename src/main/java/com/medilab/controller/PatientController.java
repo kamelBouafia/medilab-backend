@@ -1,53 +1,33 @@
 package com.medilab.controller;
 
-import com.medilab.config.TenantPrincipal;
-import com.medilab.entity.Requisition;
-import com.medilab.entity.TestResult;
-import com.medilab.repository.RequisitionRepository;
-import com.medilab.repository.TestResultRepository;
+import com.medilab.entity.Patient;
+import com.medilab.service.PatientService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
-@RequestMapping("/api/patient")
+@RequestMapping("/api/patients")
 public class PatientController {
 
-    private final RequisitionRepository requisitionRepository;
-    private final TestResultRepository testResultRepository;
+    private final PatientService patientService;
 
-    public PatientController(RequisitionRepository requisitionRepository, TestResultRepository testResultRepository) {
-        this.requisitionRepository = requisitionRepository;
-        this.testResultRepository = testResultRepository;
+    @Autowired
+    public PatientController(PatientService patientService) {
+        this.patientService = patientService;
     }
 
-    @GetMapping("/requisitions")
-    public ResponseEntity<List<Requisition>> myRequisitions(Authentication authentication) {
-
-        Object detailsObj = authentication.getDetails();
-        String patientId = null;
-
-        if (detailsObj instanceof Map<?, ?> detailsMap) {
-            patientId = (String) detailsMap.get("patientId");
-        }
-
-        if (patientId == null) {
-            return ResponseEntity.status(401).build(); // Unauthorized
-        }
-
-        // Fetch all requisitions for this patient
-        List<Requisition> requisitions = requisitionRepository.findAllByPatientId(patientId);
-
-        return ResponseEntity.ok(requisitions);
+    @GetMapping
+    public ResponseEntity<List<Patient>> getPatients() {
+        // Assuming a service method that returns all patients
+        return ResponseEntity.ok(patientService.getAllPatients());
     }
 
-    @GetMapping("/requisitions/{reqId}/results")
-    public ResponseEntity<?> results(@PathVariable String reqId, Authentication auth) {
-        TenantPrincipal tp = (TenantPrincipal) auth;
-        List<TestResult> results = testResultRepository.findAllByRequisitionIdAndLabId(reqId, tp.getLabId());
-        return ResponseEntity.ok(results);
+    @PostMapping
+    public ResponseEntity<Patient> addPatient(@RequestBody Patient patient) {
+        // Assuming a service method that saves a new patient
+        return ResponseEntity.ok(patientService.addPatient(patient));
     }
 }
