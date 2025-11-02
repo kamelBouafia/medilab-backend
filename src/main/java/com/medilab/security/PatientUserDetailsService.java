@@ -23,21 +23,13 @@ public class PatientUserDetailsService implements UserDetailsService {
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        String[] parts = username.split("-");
-        if (parts.length != 2) {
-            throw new UsernameNotFoundException("Invalid username format");
-        }
-
-        Long labId = Long.parseLong(parts[0]);
-        Long patientId = Long.parseLong(parts[1]);
-
-        Patient patient = patientRepository.findByLabIdAndId(labId, patientId)
+        Patient patient = patientRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Patient not found with username: " + username));
 
         return new AuthenticatedUser(
                 patient.getId(),
                 patient.getLab().getId(),
-                patient.getLab().getId() + "-" + patient.getId(),
+                patient.getUsername(),
                 patient.getDob().toString(),
                 List.of(new SimpleGrantedAuthority("ROLE_PATIENT")),
                 "patient"

@@ -38,9 +38,8 @@ public class AuthController {
 
     @PostMapping("/patient/login")
     public LoginResponse patientLogin(@RequestBody PatientLoginRequest loginRequest) {
-        String username = loginRequest.getLabId() + "-" + loginRequest.getPatientId();
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, loginRequest.getDob().toString()));
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getDob().toString()));
 
         AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
         String jwt = jwtUtil.generateToken(user);

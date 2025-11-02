@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -28,6 +27,7 @@ public class JwtUtil {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", authenticatedUser.getId());
         claims.put("labId", authenticatedUser.getLabId());
+        claims.put("username", authenticatedUser.getUsername()); // Added username as a custom claim
         claims.put("authorities", authenticatedUser.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
         claims.put("type", authenticatedUser.getUserType());
 

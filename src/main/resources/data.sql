@@ -1,5 +1,5 @@
 -- LABS
-INSERT INTO labs (name) VALUES ('Lab A');
+INSERT INTO labs (name) VALUES ('Main Lab');
 
 -- STAFF_USERS
 -- The password for all users is 'password'
@@ -8,8 +8,8 @@ INSERT INTO staff_users (name, username, password, role, lab_id) VALUES ('Manage
 INSERT INTO staff_users (name, username, password, role, lab_id) VALUES ('Technician', 'technician', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1);
 
 -- PATIENTS
-INSERT INTO patients (name, dob, gender, contact, created_by_id, lab_id)
-VALUES ('John Doe', '1990-01-01', 'Male', 'john@example.com', 1, 1);
+INSERT INTO patients (name, username, dob, gender, contact, created_by_id, lab_id)
+VALUES ('John Doe', 'john.doe', '1990-01-01', 'Male', 'john@example.com', 1, 1);
 
 -- LAB_TESTS
 INSERT INTO lab_tests (name, category, lab_id)

@@ -23,6 +23,10 @@ public class Patient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+
+    @Column(unique = true, nullable = false)
+    private String username;
+
     private LocalDate dob;
 
     @Enumerated(EnumType.STRING)

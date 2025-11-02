@@ -6,7 +6,6 @@ import java.time.LocalDate;
 
 @Data
 public class PatientLoginRequest {
-    private Long labId;
-    private Long patientId;
+    private String username;
     private LocalDate dob;
 }
