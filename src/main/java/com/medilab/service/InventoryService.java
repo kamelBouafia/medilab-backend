@@ -7,6 +7,7 @@ import com.medilab.mapper.InventoryItemMapper;
 import com.medilab.repository.InventoryItemRepository;
 import com.medilab.repository.LabRepository;
 import com.medilab.repository.StaffUserRepository;
+import com.medilab.security.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -30,17 +31,17 @@ public class InventoryService {
     private InventoryItemMapper inventoryItemMapper;
 
     public List<InventoryItemDto> getInventory() {
-        StaffUser user = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return inventoryItemRepository.findByLabId(user.getLab().getId()).stream()
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return inventoryItemRepository.findByLabId(user.getLabId()).stream()
                 .map(inventoryItemMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public InventoryItemDto createInventoryItem(InventoryItemDto inventoryItemDto) {
-        StaffUser user = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         InventoryItem inventoryItem = inventoryItemMapper.toEntity(inventoryItemDto);
 
-        labRepository.findById(user.getLab().getId()).ifPresent(inventoryItem::setLab);
+        labRepository.findById(user.getLabId()).ifPresent(inventoryItem::setLab);
         staffUserRepository.findById(user.getId()).ifPresent(inventoryItem::setAddedBy);
 
         InventoryItem savedInventoryItem = inventoryItemRepository.save(inventoryItem);
@@ -48,12 +49,12 @@ public class InventoryService {
     }
 
     public InventoryItemDto updateInventoryItem(Long id, InventoryItemDto inventoryItemDto) {
-        StaffUser user = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         // Add logic to ensure the item belongs to the user's lab
         InventoryItem inventoryItem = inventoryItemMapper.toEntity(inventoryItemDto);
         inventoryItem.setId(id);
 
-        labRepository.findById(user.getLab().getId()).ifPresent(inventoryItem::setLab);
+        labRepository.findById(user.getLabId()).ifPresent(inventoryItem::setLab);
         staffUserRepository.findById(user.getId()).ifPresent(inventoryItem::setAddedBy);
 
         InventoryItem updatedInventoryItem = inventoryItemRepository.save(inventoryItem);
@@ -61,7 +62,7 @@ public class InventoryService {
     }
 
     public void deleteInventoryItem(Long id) {
-        StaffUser user = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         // Add logic to ensure the item belongs to the user's lab
         inventoryItemRepository.deleteById(id);
     }

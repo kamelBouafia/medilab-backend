@@ -2,9 +2,9 @@ package com.medilab.service;
 
 import com.medilab.dto.RequisitionDto;
 import com.medilab.entity.Requisition;
-import com.medilab.entity.StaffUser;
 import com.medilab.mapper.RequisitionMapper;
 import com.medilab.repository.*;
+import com.medilab.security.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -35,18 +35,18 @@ public class RequisitionService {
     private RequisitionMapper requisitionMapper;
 
     public List<RequisitionDto> getRequisitions() {
-        StaffUser user = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return requisitionRepository.findByLabId(user.getLab().getId()).stream()
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return requisitionRepository.findByLabId(user.getLabId()).stream()
                 .map(requisitionMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public RequisitionDto createRequisition(RequisitionDto requisitionDto) {
-        StaffUser user = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Requisition requisition = requisitionMapper.toEntity(requisitionDto);
 
         patientRepository.findById(requisitionDto.getPatientId()).ifPresent(requisition::setPatient);
-        labRepository.findById(user.getLab().getId()).ifPresent(requisition::setLab);
+        labRepository.findById(user.getLabId()).ifPresent(requisition::setLab);
         staffUserRepository.findById(user.getId()).ifPresent(requisition::setCreatedBy);
 
         if (requisitionDto.getTestIds() != null) {

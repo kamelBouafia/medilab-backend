@@ -1,27 +1,35 @@
 package com.medilab.security;
 
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final UserDetailsServiceImpl userDetailsService;
+    private final UserDetailsService staffUserDetailsService;
+    private final UserDetailsService patientUserDetailsService;
 
-    public JwtFilter(JwtUtil jwtUtil, UserDetailsServiceImpl userDetailsService) {
+    public JwtFilter(JwtUtil jwtUtil, @Qualifier("staffUserDetailsService") UserDetailsService staffUserDetailsService, @Qualifier("patientUserDetailsService") UserDetailsService patientUserDetailsService) {
         this.jwtUtil = jwtUtil;
-        this.userDetailsService = userDetailsService;
+        this.staffUserDetailsService = staffUserDetailsService;
+        this.patientUserDetailsService = patientUserDetailsService;
     }
 
     @Override
@@ -37,11 +45,24 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            Claims claims = jwtUtil.extractAllClaims(jwt);
+            Long userId = claims.get("userId", Long.class);
+            Long labId = claims.get("labId", Long.class);
+            List<String> authorities = claims.get("authorities", List.class);
+            String userType = claims.get("type", String.class);
 
-            if (jwtUtil.validateToken(jwt, userDetails)) {
+            AuthenticatedUser authenticatedUser = new AuthenticatedUser(
+                    userId,
+                    labId,
+                    username,
+                    null, // Password is not needed in the context
+                    authorities.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()),
+                    userType
+            );
+
+            if (jwtUtil.validateToken(jwt, authenticatedUser)) {
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
+                        authenticatedUser, null, authenticatedUser.getAuthorities());
                 usernamePasswordAuthenticationToken
                         .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);

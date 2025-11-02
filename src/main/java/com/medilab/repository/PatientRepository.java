@@ -12,4 +12,6 @@ import java.util.List;
 public interface PatientRepository extends JpaRepository<Patient, Long> {
     List<Patient> findByLabId(Long labId);
     Optional<Patient> findByLabIdAndIdAndDob(Long labId, Long id, LocalDate dob);
+
+    Optional<Patient> findByLabIdAndId(Long labId, Long id);
 }

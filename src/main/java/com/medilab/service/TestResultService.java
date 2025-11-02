@@ -2,10 +2,10 @@ package com.medilab.service;
 
 import com.medilab.dto.TestResultDto;
 import com.medilab.entity.SampleStatus;
-import com.medilab.entity.StaffUser;
 import com.medilab.entity.TestResult;
 import com.medilab.mapper.TestResultMapper;
 import com.medilab.repository.*;
+import com.medilab.security.AuthenticatedUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,7 @@ public class TestResultService {
     private TestResultMapper testResultMapper;
 
     public List<TestResultDto> saveTestResults(List<TestResultDto> testResultDtos) {
-        StaffUser user = (StaffUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         List<TestResult> testResults = testResultDtos.stream().map(dto -> {
             TestResult testResult = testResultMapper.toEntity(dto);
@@ -43,7 +43,7 @@ public class TestResultService {
             requisitionRepository.findById(dto.getRequisitionId()).ifPresent(testResult::setRequisition);
             labTestRepository.findById(dto.getTestId()).ifPresent(testResult::setTest);
             staffUserRepository.findById(user.getId()).ifPresent(testResult::setEnteredBy);
-            labRepository.findById(user.getLab().getId()).ifPresent(testResult::setLab);
+            labRepository.findById(user.getLabId()).ifPresent(testResult::setLab);
 
             return testResult;
         }).collect(Collectors.toList());
