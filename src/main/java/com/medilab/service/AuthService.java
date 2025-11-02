@@ -23,19 +23,16 @@ public class AuthService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    public Optional<String> staffLogin(Long labId, Long userId) {
-        Optional<StaffUser> user = staffUserRepository.findById(userId);
-        if (user.isPresent() && user.get().getLab().getId().equals(labId)) {
-            return Optional.of(jwtUtil.generateToken(user.get()));
-        }
-        return Optional.empty();
-    }
+//    public Optional<String> staffLogin(Long labId, Long userId) {
+//        Optional<StaffUser> user = staffUserRepository.findById(userId);
+//        if (user.isPresent() && user.get().getLab().getId().equals(labId)) {
+//            return Optional.of(jwtUtil.generateToken(user.get().getUsername()));
+//        }
+//        return Optional.empty();
+//    }
 
     public Optional<String> patientLogin(Long labId, Long patientId, LocalDate dob) {
         Optional<Patient> patient = patientRepository.findByLabIdAndIdAndDob(labId, patientId, dob);
-        if (patient.isPresent()) {
-            return Optional.of(jwtUtil.generatePatientToken(patient.get()));
-        }
-        return Optional.empty();
+        return patient.map(value -> jwtUtil.generateToken(value.getName()));
     }
 }

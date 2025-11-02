@@ -55,13 +55,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- PostgreSQL Driver (for later switch to Postgres DB) -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
         <!-- JWT (JSON Web Tokens) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

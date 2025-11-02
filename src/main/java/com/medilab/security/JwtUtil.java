@@ -1,10 +1,10 @@
 package com.medilab.security;
 
-import com.medilab.entity.StaffUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -21,37 +21,20 @@ public class JwtUtil {
     @Value("${app.jwt.expiration}")
     private Long expiration;
 
-    public String generateToken(StaffUser user) {
+    public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", user.getId());
-        claims.put("name", user.getName());
-        claims.put("role", user.getRole().name());
-        claims.put("labId", user.getLab().getId());
-        return createToken(claims, String.valueOf(user.getId()));
-    }
-
-    public String generatePatientToken(com.medilab.entity.Patient patient) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("patientId", patient.getId());
-        claims.put("name", patient.getName());
-        claims.put("role", "patient");
-        claims.put("labId", patient.getLab().getId());
-        return createToken(claims, String.valueOf(patient.getId()));
+        return createToken(claims, username);
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
-        return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(subject)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
+        return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
-                .signWith(SignatureAlgorithm.HS256, secret)
-                .compact();
+                .signWith(SignatureAlgorithm.HS256, secret).compact();
     }
 
-    public Boolean validateToken(String token, String subject) {
+    public Boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        return (username.equals(subject) && !isTokenExpired(token));
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
     public String extractUsername(String token) {
@@ -67,7 +50,7 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
 
-    Claims extractAllClaims(String token) {
+    private Claims extractAllClaims(String token) {
         return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
     }
 
