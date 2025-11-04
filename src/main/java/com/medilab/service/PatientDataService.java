@@ -31,7 +31,7 @@ public class PatientDataService {
 
     public List<RequisitionDto> getPatientRequisitions() {
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return requisitionRepository.findByPatientIdAndLabId(user.getId(), user.getLabId()).stream()
+        return requisitionRepository.findByPatientIdAndLabIdWithTests(user.getId(), user.getLabId()).stream()
                 .map(requisitionMapper::toDto)
                 .collect(Collectors.toList());
     }

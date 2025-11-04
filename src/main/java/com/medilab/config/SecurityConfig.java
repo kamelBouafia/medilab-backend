@@ -1,9 +1,10 @@
 package com.medilab.config;
 
+import com.medilab.repository.PatientRepository;
+import com.medilab.repository.StaffUserRepository;
 import com.medilab.security.JwtFilter;
 import com.medilab.security.PatientUserDetailsService;
 import com.medilab.security.StaffUserDetailsService;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -11,7 +12,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -28,13 +28,13 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
-    private final StaffUserDetailsService staffUserDetailsService;
-    private final PatientUserDetailsService patientUserDetailsService;
+    private final StaffUserRepository staffUserRepository;
+    private final PatientRepository patientRepository;
 
-    public SecurityConfig(JwtFilter jwtFilter, StaffUserDetailsService staffUserDetailsService, PatientUserDetailsService patientUserDetailsService) {
+    public SecurityConfig(JwtFilter jwtFilter, StaffUserRepository staffUserRepository, PatientRepository patientRepository) {
         this.jwtFilter = jwtFilter;
-        this.staffUserDetailsService = staffUserDetailsService;
-        this.patientUserDetailsService = patientUserDetailsService;
+        this.staffUserRepository = staffUserRepository;
+        this.patientRepository = patientRepository;
     }
 
     @Bean
@@ -56,7 +56,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationProvider staffAuthenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(staffUserDetailsService);
+        authProvider.setUserDetailsService(new StaffUserDetailsService(staffUserRepository));
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
@@ -64,7 +64,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationProvider patientAuthenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(patientUserDetailsService);
+        authProvider.setUserDetailsService(new PatientUserDetailsService(patientRepository));
         authProvider.setPasswordEncoder(plainTextPasswordEncoder());
         return authProvider;
     }
@@ -90,9 +90,12 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager() {
+    public AuthenticationManager authenticationManager(
+            AuthenticationProvider staffAuthenticationProvider,
+            AuthenticationProvider patientAuthenticationProvider
+    ) {
         return new ProviderManager(
-                List.of(staffAuthenticationProvider(), patientAuthenticationProvider())
+                List.of(staffAuthenticationProvider, patientAuthenticationProvider)
         );
     }
 }

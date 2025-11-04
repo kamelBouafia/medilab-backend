@@ -28,4 +28,10 @@ public class RequisitionController {
         RequisitionDto createdRequisition = requisitionService.createRequisition(requisitionDto);
         return new ResponseEntity<>(createdRequisition, HttpStatus.CREATED);
     }
+
+    @PatchMapping("/{requisitionId}/status")
+    public ResponseEntity<RequisitionDto> updateRequisitionStatus(@PathVariable Long requisitionId, @RequestBody RequisitionDto requisitionDto) {
+        RequisitionDto updatedRequisition = requisitionService.updateRequisitionStatus(requisitionId, requisitionDto);
+        return ResponseEntity.ok(updatedRequisition);
+    }
 }
