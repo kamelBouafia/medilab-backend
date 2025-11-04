@@ -5,6 +5,7 @@ import com.medilab.repository.StaffUserRepository;
 import com.medilab.security.JwtFilter;
 import com.medilab.security.PatientUserDetailsService;
 import com.medilab.security.StaffUserDetailsService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -25,17 +26,12 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final StaffUserRepository staffUserRepository;
     private final PatientRepository patientRepository;
-
-    public SecurityConfig(JwtFilter jwtFilter, StaffUserRepository staffUserRepository, PatientRepository patientRepository) {
-        this.jwtFilter = jwtFilter;
-        this.staffUserRepository = staffUserRepository;
-        this.patientRepository = patientRepository;
-    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {

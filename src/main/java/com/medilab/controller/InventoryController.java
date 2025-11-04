@@ -2,7 +2,7 @@ package com.medilab.controller;
 
 import com.medilab.dto.InventoryItemDto;
 import com.medilab.service.InventoryService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,10 +13,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/inventory")
 @PreAuthorize("hasRole('Staff')")
+@RequiredArgsConstructor
 public class InventoryController {
 
-    @Autowired
-    private InventoryService inventoryService;
+    private final InventoryService inventoryService;
 
     @GetMapping
     public ResponseEntity<List<InventoryItemDto>> getInventory() {

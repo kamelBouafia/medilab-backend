@@ -1,12 +1,14 @@
 package com.medilab.security;
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 
 @Getter
+@RequiredArgsConstructor
 public class AuthenticatedUser implements UserDetails {
 
     private final Long id;
@@ -15,15 +17,6 @@ public class AuthenticatedUser implements UserDetails {
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
     private final String userType; // "staff" or "patient"
-
-    public AuthenticatedUser(Long id, Long labId, String username, String password, Collection<? extends GrantedAuthority> authorities, String userType) {
-        this.id = id;
-        this.labId = labId;
-        this.username = username;
-        this.password = password;
-        this.authorities = authorities;
-        this.userType = userType;
-    }
 
     @Override
     public boolean isAccountNonExpired() {

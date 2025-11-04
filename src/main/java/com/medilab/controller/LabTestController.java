@@ -2,7 +2,7 @@ package com.medilab.controller;
 
 import com.medilab.dto.LabTestDto;
 import com.medilab.service.LabTestService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,10 +13,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/lab-tests")
+@RequiredArgsConstructor
 public class LabTestController {
 
-    @Autowired
-    private LabTestService labTestService;
+    private final LabTestService labTestService;
 
     @GetMapping
     @PreAuthorize("hasAnyRole('Staff', 'Patient')")

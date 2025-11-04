@@ -2,7 +2,7 @@ package com.medilab.controller;
 
 import com.medilab.dto.PatientDto;
 import com.medilab.service.PatientService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,10 +13,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/patients")
 @PreAuthorize("hasRole('Staff')")
+@RequiredArgsConstructor
 public class PatientController {
 
-    @Autowired
-    private PatientService patientService;
+    private final PatientService patientService;
 
     @GetMapping
     public ResponseEntity<List<PatientDto>> getPatients() {

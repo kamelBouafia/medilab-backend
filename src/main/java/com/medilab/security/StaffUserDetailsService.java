@@ -2,6 +2,7 @@ package com.medilab.security;
 
 import com.medilab.entity.StaffUser;
 import com.medilab.repository.StaffUserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,14 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-
+@RequiredArgsConstructor
 public class StaffUserDetailsService implements UserDetailsService {
 
     private final StaffUserRepository staffUserRepository;
-
-    public StaffUserDetailsService(StaffUserRepository staffUserRepository) {
-        this.staffUserRepository = staffUserRepository;
-    }
 
     @Override
     @Transactional

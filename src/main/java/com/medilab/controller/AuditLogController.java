@@ -2,7 +2,7 @@ package com.medilab.controller;
 
 import com.medilab.dto.AuditLogDto;
 import com.medilab.service.AuditLogService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,10 +14,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/audit-trail")
 @PreAuthorize("hasRole('Manager')")
+@RequiredArgsConstructor
 public class AuditLogController {
 
-    @Autowired
-    private AuditLogService auditLogService;
+    private final AuditLogService auditLogService;
 
     @GetMapping
     public ResponseEntity<List<AuditLogDto>> getAuditTrail() {

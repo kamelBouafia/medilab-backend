@@ -1,7 +1,7 @@
 package com.medilab.controller;
 
 import com.medilab.service.InterpretService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,10 +14,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/interpret")
 @PreAuthorize("hasRole('Staff')")
+@RequiredArgsConstructor
 public class InterpretController {
 
-    @Autowired
-    private InterpretService interpretService;
+    private final InterpretService interpretService;
 
     @PostMapping
     public ResponseEntity<?> getInterpretation(@RequestBody Map<String, String> body) {

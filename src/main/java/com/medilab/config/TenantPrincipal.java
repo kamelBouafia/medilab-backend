@@ -1,5 +1,7 @@
 package com.medilab.config;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -8,6 +10,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
+@RequiredArgsConstructor
+@Getter
 public class TenantPrincipal implements Authentication {
 
     private final String name;
@@ -15,13 +19,6 @@ public class TenantPrincipal implements Authentication {
     private final String labId;
     private boolean authenticated = true;
     private final Map<String, Object> claims;
-
-    public TenantPrincipal(String name, String role, String labId, Map<String, Object> claims) {
-        this.name = name;
-        this.role = role;
-        this.labId = labId;
-        this.claims = claims;
-    }
 
     public static TenantPrincipal fromClaims(io.jsonwebtoken.Claims claims) {
         String name = claims.get("name", String.class);
@@ -33,9 +30,6 @@ public class TenantPrincipal implements Authentication {
     public String getUserId() {
         return (String) claims.get("userId"); // might be null for patient tokens
     }
-
-    public String getRole() { return role; }
-    public String getLabId() { return labId; }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -60,6 +54,4 @@ public class TenantPrincipal implements Authentication {
     @Override
     public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException { this.authenticated = isAuthenticated; }
 
-    @Override
-    public String getName() { return name; }
 }

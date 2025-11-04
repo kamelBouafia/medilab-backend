@@ -2,7 +2,7 @@ package com.medilab.controller;
 
 import com.medilab.dto.TestResultDto;
 import com.medilab.service.TestResultService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,10 +17,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/results")
 @PreAuthorize("hasRole('Staff')")
+@RequiredArgsConstructor
 public class TestResultController {
 
-    @Autowired
-    private TestResultService testResultService;
+    private final TestResultService testResultService;
 
     @PostMapping
     public ResponseEntity<?> saveTestResults(@RequestBody List<TestResultDto> testResultDtos) {

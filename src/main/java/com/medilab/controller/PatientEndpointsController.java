@@ -3,7 +3,7 @@ package com.medilab.controller;
 import com.medilab.dto.RequisitionDto;
 import com.medilab.dto.TestResultDto;
 import com.medilab.service.PatientDataService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,10 +16,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/patient")
 @PreAuthorize("hasRole('Patient')")
+@RequiredArgsConstructor
 public class PatientEndpointsController {
 
-    @Autowired
-    private PatientDataService patientDataService;
+    private final PatientDataService patientDataService;
 
     @GetMapping("/requisitions")
     public ResponseEntity<List<RequisitionDto>> getPatientRequisitions() {
