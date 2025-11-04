@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/audit-trail")
+@RequestMapping("/api/audit-log")
 @PreAuthorize("hasRole('Manager')")
 @RequiredArgsConstructor
 public class AuditLogController {

@@ -8,7 +8,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface LabTestMapper {
 
-    @Mapping(target = "price", constant = "0.0") // Default value
     LabTestDto toDto(LabTest labTest);
 
     @Mapping(target = "lab", ignore = true)

@@ -2,13 +2,13 @@ package com.medilab.service;
 
 import com.medilab.dto.InventoryItemDto;
 import com.medilab.entity.InventoryItem;
-import com.medilab.entity.StaffUser;
+import com.medilab.exception.ResourceNotFoundException;
 import com.medilab.mapper.InventoryItemMapper;
 import com.medilab.repository.InventoryItemRepository;
 import com.medilab.repository.LabRepository;
 import com.medilab.repository.StaffUserRepository;
 import com.medilab.security.AuthenticatedUser;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -16,19 +16,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class InventoryService {
 
-    @Autowired
-    private InventoryItemRepository inventoryItemRepository;
-
-    @Autowired
-    private StaffUserRepository staffUserRepository;
-
-    @Autowired
-    private LabRepository labRepository;
-
-    @Autowired
-    private InventoryItemMapper inventoryItemMapper;
+    private final InventoryItemRepository inventoryItemRepository;
+    private final StaffUserRepository staffUserRepository;
+    private final LabRepository labRepository;
+    private final InventoryItemMapper inventoryItemMapper;
+    private final AuditLogService auditLogService;
 
     public List<InventoryItemDto> getInventory() {
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -45,25 +40,32 @@ public class InventoryService {
         staffUserRepository.findById(user.getId()).ifPresent(inventoryItem::setAddedBy);
 
         InventoryItem savedInventoryItem = inventoryItemRepository.save(inventoryItem);
+        auditLogService.logAction("INVENTORY_CREATED", "Inventory item '" + savedInventoryItem.getName() + "' (ID: " + savedInventoryItem.getId() + ") was created.");
         return inventoryItemMapper.toDto(savedInventoryItem);
     }
 
     public InventoryItemDto updateInventoryItem(Long id, InventoryItemDto inventoryItemDto) {
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        // Add logic to ensure the item belongs to the user's lab
-        InventoryItem inventoryItem = inventoryItemMapper.toEntity(inventoryItemDto);
-        inventoryItem.setId(id);
+        InventoryItem existingInventoryItem = inventoryItemRepository.findByIdAndLabId(id, user.getLabId())
+                .orElseThrow(() -> new ResourceNotFoundException("Inventory item not found"));
 
-        labRepository.findById(user.getLabId()).ifPresent(inventoryItem::setLab);
-        staffUserRepository.findById(user.getId()).ifPresent(inventoryItem::setAddedBy);
+        existingInventoryItem.setName(inventoryItemDto.getName());
+        existingInventoryItem.setCategory(inventoryItemDto.getCategory());
+        existingInventoryItem.setQuantity(inventoryItemDto.getQuantity());
+        existingInventoryItem.setLowStockThreshold(inventoryItemDto.getLowStockThreshold());
+        existingInventoryItem.setSupplier(inventoryItemDto.getSupplier());
 
-        InventoryItem updatedInventoryItem = inventoryItemRepository.save(inventoryItem);
+        InventoryItem updatedInventoryItem = inventoryItemRepository.save(existingInventoryItem);
+        auditLogService.logAction("INVENTORY_UPDATED", "Inventory item '" + updatedInventoryItem.getName() + "' (ID: " + updatedInventoryItem.getId() + ") was updated.");
         return inventoryItemMapper.toDto(updatedInventoryItem);
     }
 
     public void deleteInventoryItem(Long id) {
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        // Add logic to ensure the item belongs to the user's lab
+        InventoryItem existingInventoryItem = inventoryItemRepository.findByIdAndLabId(id, user.getLabId())
+                .orElseThrow(() -> new ResourceNotFoundException("Inventory item not found"));
+
         inventoryItemRepository.deleteById(id);
+        auditLogService.logAction("INVENTORY_DELETED", "Inventory item '" + existingInventoryItem.getName() + "' (ID: " + existingInventoryItem.getId() + ") was deleted.");
     }
 }

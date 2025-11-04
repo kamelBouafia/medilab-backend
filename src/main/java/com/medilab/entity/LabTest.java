@@ -22,6 +22,7 @@ public class LabTest {
     private Long id;
     private String name;
     private String category;
+    private double price;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "labId", nullable = false)

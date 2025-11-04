@@ -9,6 +9,7 @@ import org.mapstruct.Mapping;
 public interface AuditLogMapper {
 
     @Mapping(source = "user.id", target = "userId")
+    @Mapping(source = "user.name", target = "userName")
     AuditLogDto toDto(AuditLog auditLog);
 
     @Mapping(target = "user", ignore = true)

@@ -12,10 +12,10 @@ INSERT INTO patients (name, username, dob, gender, contact, created_by_id, lab_i
 VALUES ('John Doe', 'john.doe', '1990-01-01', 'Male', 'john@example.com', 1, 1);
 
 -- LAB_TESTS
-INSERT INTO lab_tests (name, category, lab_id)
+INSERT INTO lab_tests (name, category, price, lab_id)
 VALUES
-    ('Complete Blood Count (CBC)', 'Hematology', 1),
-    ('Blood Glucose', 'Chemistry', 1);
+    ('Complete Blood Count (CBC)', 'Hematology', 25.00, 1),
+    ('Blood Glucose', 'Chemistry', 35.00, 1);
 
 -- REQUISITIONS
 INSERT INTO requisitions (patient_id, doctor_name, date, status, created_by_id, lab_id)
