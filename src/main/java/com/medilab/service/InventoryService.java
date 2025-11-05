@@ -4,32 +4,42 @@ import com.medilab.dto.InventoryItemDto;
 import com.medilab.entity.InventoryItem;
 import com.medilab.exception.ResourceNotFoundException;
 import com.medilab.mapper.InventoryItemMapper;
-import com.medilab.repository.InventoryItemRepository;
+import com.medilab.repository.InventoryRepository;
 import com.medilab.repository.LabRepository;
 import com.medilab.repository.StaffUserRepository;
 import com.medilab.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
 public class InventoryService {
 
-    private final InventoryItemRepository inventoryItemRepository;
+    private final InventoryRepository inventoryRepository;
     private final StaffUserRepository staffUserRepository;
     private final LabRepository labRepository;
     private final InventoryItemMapper inventoryItemMapper;
     private final AuditLogService auditLogService;
 
-    public List<InventoryItemDto> getInventory() {
+    public Page<InventoryItemDto> getInventory(int page, int limit, String q, String sort, String order) {
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return inventoryItemRepository.findByLabId(user.getLabId()).stream()
-                .map(inventoryItemMapper::toDto)
-                .collect(Collectors.toList());
+        Sort.Direction direction = Sort.Direction.fromString(order);
+        Pageable pageable = PageRequest.of(page > 0 ? page - 1 : 0, limit, Sort.by(direction, sort));
+
+        Specification<InventoryItem> spec = Specification.where((root, query, cb) -> cb.equal(root.get("lab").get("id"), user.getLabId()));
+
+        if (StringUtils.hasText(q)) {
+            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + q.toLowerCase() + "%"));
+        }
+
+        return inventoryRepository.findAll(spec, pageable).map(inventoryItemMapper::toDto);
     }
 
     public InventoryItemDto createInventoryItem(InventoryItemDto inventoryItemDto) {
@@ -39,14 +49,14 @@ public class InventoryService {
         labRepository.findById(user.getLabId()).ifPresent(inventoryItem::setLab);
         staffUserRepository.findById(user.getId()).ifPresent(inventoryItem::setAddedBy);
 
-        InventoryItem savedInventoryItem = inventoryItemRepository.save(inventoryItem);
+        InventoryItem savedInventoryItem = inventoryRepository.save(inventoryItem);
         auditLogService.logAction("INVENTORY_CREATED", "Inventory item '" + savedInventoryItem.getName() + "' (ID: " + savedInventoryItem.getId() + ") was created.");
         return inventoryItemMapper.toDto(savedInventoryItem);
     }
 
     public InventoryItemDto updateInventoryItem(Long id, InventoryItemDto inventoryItemDto) {
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        InventoryItem existingInventoryItem = inventoryItemRepository.findByIdAndLabId(id, user.getLabId())
+        InventoryItem existingInventoryItem = inventoryRepository.findByIdAndLabId(id, user.getLabId())
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory item not found"));
 
         existingInventoryItem.setName(inventoryItemDto.getName());
@@ -55,17 +65,17 @@ public class InventoryService {
         existingInventoryItem.setLowStockThreshold(inventoryItemDto.getLowStockThreshold());
         existingInventoryItem.setSupplier(inventoryItemDto.getSupplier());
 
-        InventoryItem updatedInventoryItem = inventoryItemRepository.save(existingInventoryItem);
+        InventoryItem updatedInventoryItem = inventoryRepository.save(existingInventoryItem);
         auditLogService.logAction("INVENTORY_UPDATED", "Inventory item '" + updatedInventoryItem.getName() + "' (ID: " + updatedInventoryItem.getId() + ") was updated.");
         return inventoryItemMapper.toDto(updatedInventoryItem);
     }
 
     public void deleteInventoryItem(Long id) {
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        InventoryItem existingInventoryItem = inventoryItemRepository.findByIdAndLabId(id, user.getLabId())
+        InventoryItem existingInventoryItem = inventoryRepository.findByIdAndLabId(id, user.getLabId())
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory item not found"));
 
-        inventoryItemRepository.deleteById(id);
+        inventoryRepository.deleteById(id);
         auditLogService.logAction("INVENTORY_DELETED", "Inventory item '" + existingInventoryItem.getName() + "' (ID: " + existingInventoryItem.getId() + ") was deleted.");
     }
 }

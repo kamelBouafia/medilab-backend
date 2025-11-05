@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 public interface RequisitionMapper {
 
     @Mapping(source = "patient.id", target = "patientId")
+    @Mapping(source = "patient.name", target = "patientName")
     @Mapping(source = "createdBy.id", target = "createdById")
     @Mapping(source = "tests", target = "testIds", qualifiedByName = "testsToTestIds")
     RequisitionDto toDto(Requisition requisition);

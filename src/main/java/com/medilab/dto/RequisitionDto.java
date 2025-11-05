@@ -8,6 +8,7 @@ import java.util.List;
 public class RequisitionDto {
     private Long id;
     private Long patientId;
+    private String patientName;
     private String doctorName;
     private String date;
     private List<Long> testIds;

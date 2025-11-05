@@ -41,6 +41,7 @@ CREATE TABLE requisitions (
     doctor_name VARCHAR(255),
     date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     status VARCHAR(50),
+    completion_date TIMESTAMP,
     created_by_id BIGINT NOT NULL,
     lab_id BIGINT NOT NULL,
     FOREIGN KEY (patient_id) REFERENCES patients(id),

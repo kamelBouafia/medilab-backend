@@ -1,65 +1,75 @@
 package com.medilab.service;
 
 import com.medilab.dto.TestResultDto;
+import com.medilab.entity.Requisition;
 import com.medilab.entity.SampleStatus;
 import com.medilab.entity.TestResult;
+import com.medilab.exception.ResourceNotFoundException;
 import com.medilab.mapper.TestResultMapper;
 import com.medilab.repository.*;
 import com.medilab.security.AuthenticatedUser;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class TestResultService {
 
-    @Autowired
-    private TestResultRepository testResultRepository;
+    private final TestResultRepository testResultRepository;
+    private final RequisitionRepository requisitionRepository;
+    private final LabTestRepository labTestRepository;
+    private final StaffUserRepository staffUserRepository;
+    private final LabRepository labRepository;
+    private final TestResultMapper testResultMapper;
 
-    @Autowired
-    private RequisitionRepository requisitionRepository;
-
-    @Autowired
-    private LabTestRepository labTestRepository;
-
-    @Autowired
-    private StaffUserRepository staffUserRepository;
-
-    @Autowired
-    private LabRepository labRepository;
-
-    @Autowired
-    private TestResultMapper testResultMapper;
-
+    @Transactional
     public List<TestResultDto> saveTestResults(List<TestResultDto> testResultDtos) {
+        if (testResultDtos.isEmpty()) {
+            return List.of();
+        }
+
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long requisitionId = testResultDtos.get(0).getRequisitionId();
 
-        List<TestResult> testResults = testResultDtos.stream().map(dto -> {
-            TestResult testResult = testResultMapper.toEntity(dto);
+        // Fetch existing results for this requisition
+        Map<Long, TestResult> existingResultsMap = testResultRepository.findByRequisitionId(requisitionId).stream()
+                .collect(Collectors.toMap(tr -> tr.getTest().getId(), Function.identity()));
 
-            requisitionRepository.findById(dto.getRequisitionId()).ifPresent(testResult::setRequisition);
-            labTestRepository.findById(dto.getTestId()).ifPresent(testResult::setTest);
-            staffUserRepository.findById(user.getId()).ifPresent(testResult::setEnteredBy);
-            labRepository.findById(user.getLabId()).ifPresent(testResult::setLab);
+        Requisition requisition = requisitionRepository.findById(requisitionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Requisition not found"));
+
+        List<TestResult> resultsToSave = testResultDtos.stream().map(dto -> {
+            TestResult testResult = existingResultsMap.get(dto.getTestId());
+            if (testResult == null) {
+                // This is a new result
+                testResult = new TestResult();
+                testResult.setRequisition(requisition);
+                labTestRepository.findById(dto.getTestId()).ifPresent(testResult::setTest);
+                labRepository.findById(user.getLabId()).ifPresent(testResult::setLab);
+                staffUserRepository.findById(user.getId()).ifPresent(testResult::setEnteredBy);
+            }
+
+            // Update values
+            testResult.setResultValue(dto.getResultValue());
+            testResult.setInterpretation(dto.getInterpretation());
 
             return testResult;
         }).collect(Collectors.toList());
 
-        List<TestResult> savedTestResults = testResultRepository.saveAll(testResults);
+        List<TestResult> savedTestResults = testResultRepository.saveAll(resultsToSave);
 
         // Update requisition status to 'Completed'
-        if (!savedTestResults.isEmpty()) {
-            savedTestResults.stream()
-                .map(TestResult::getRequisition)
-                .distinct()
-                .forEach(requisition -> {
-                    requisition.setStatus(SampleStatus.COMPLETED);
-                    requisitionRepository.save(requisition);
-                });
-        }
+        requisition.setStatus(SampleStatus.COMPLETED);
+        requisition.setCompletionDate(LocalDateTime.now());
+        requisitionRepository.save(requisition);
 
         return savedTestResults.stream()
                 .map(testResultMapper::toDto)

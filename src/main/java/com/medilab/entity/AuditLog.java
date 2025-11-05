@@ -34,7 +34,7 @@ public class AuditLog {
 
     private String action;
 
-    @Lob
+    @Column(length = 1000)
     private String details;
 
     @ManyToOne(fetch = FetchType.LAZY)

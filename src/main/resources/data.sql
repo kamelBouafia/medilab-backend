@@ -4,40 +4,156 @@ INSERT INTO labs (name) VALUES ('Branch Lab');
 
 -- STAFF_USERS
 -- The password for all users is 'password'
-INSERT INTO staff_users (name, username, password, role, lab_id) VALUES ('Alice', 'alice', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1);
-INSERT INTO staff_users (name, username, password, role, lab_id) VALUES ('Manager', 'manager', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Manager', 1);
-INSERT INTO staff_users (name, username, password, role, lab_id) VALUES ('Technician', 'technician', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1);
-INSERT INTO staff_users (name, username, password, role, lab_id) VALUES ('Bob', 'bob', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 2);
-INSERT INTO staff_users (name, username, password, role, lab_id) VALUES ('BranchManager', 'branchmanager', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Manager', 2);
+INSERT INTO staff_users (id, name, username, password, role, lab_id) VALUES
+(1, 'Alice', 'alice', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1),
+(2, 'Manager', 'manager', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Manager', 1),
+(3, 'Technician', 'technician', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1),
+(4, 'Bob', 'bob', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 2),
+(5, 'BranchManager', 'branchmanager', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Manager', 2);
 
--- PATIENTS
-INSERT INTO patients (name, username, dob, gender, contact, created_by_id, lab_id)
-VALUES ('John Doe', 'john.doe', '1990-01-01', 'Male', 'john@example.com', 1, 1);
-INSERT INTO patients (name, username, dob, gender, contact, created_by_id, lab_id)
-VALUES ('Jane Smith', 'jane.smith', '1985-05-15', 'Female', 'jane@example.com', 4, 2);
+-- PATIENTS (52 total)
+INSERT INTO patients (id, name, username, dob, gender, contact, created_by_id, lab_id) VALUES
+(1, 'John Doe', 'john.doe', '1990-01-01', 'Male', 'john@example.com', 1, 1),
+(2, 'Jane Smith', 'jane.smith', '1985-05-15', 'Female', 'jane@example.com', 4, 2),
+(3, 'Liam Johnson', 'liam.johnson', '1992-03-10', 'Male', 'liam.j@email.com', 1, 1),
+(4, 'Olivia Williams', 'olivia.williams', '1988-07-22', 'Female', 'olivia.w@email.com', 1, 1),
+(5, 'Noah Brown', 'noah.brown', '2001-11-05', 'Male', 'noah.b@email.com', 1, 1),
+(6, 'Emma Jones', 'emma.jones', '1995-09-14', 'Female', 'emma.j@email.com', 1, 1),
+(7, 'Oliver Garcia', 'oliver.garcia', '1976-02-28', 'Male', 'oliver.g@email.com', 1, 1),
+(8, 'Ava Miller', 'ava.miller', '2005-06-30', 'Female', 'ava.m@email.com', 1, 1),
+(9, 'Elijah Davis', 'elijah.davis', '1999-12-01', 'Male', 'elijah.d@email.com', 1, 1),
+(10, 'Charlotte Rodriguez', 'charlotte.rodriguez', '1983-04-19', 'Female', 'charlotte.r@email.com', 1, 1),
+(11, 'James Wilson', 'james.wilson', '1990-08-08', 'Male', 'james.w@email.com', 1, 1),
+(12, 'Sophia Martinez', 'sophia.martinez', '1998-01-25', 'Female', 'sophia.m@email.com', 1, 1),
+(13, 'William Anderson', 'william.anderson', '1979-03-12', 'Male', 'william.a@email.com', 1, 1),
+(14, 'Isabella Taylor', 'isabella.taylor', '2003-10-09', 'Female', 'isabella.t@email.com', 1, 1),
+(15, 'Henry Thomas', 'henry.thomas', '1994-05-21', 'Male', 'henry.t@email.com', 1, 1),
+(16, 'Mia Hernandez', 'mia.hernandez', '1986-11-27', 'Female', 'mia.h@email.com', 1, 1),
+(17, 'Lucas Moore', 'lucas.moore', '1991-07-07', 'Male', 'lucas.m@email.com', 1, 1),
+(18, 'Amelia Martin', 'amelia.martin', '1997-04-02', 'Female', 'amelia.m@email.com', 1, 1),
+(19, 'Benjamin Jackson', 'benjamin.jackson', '1980-09-03', 'Male', 'benjamin.j@email.com', 1, 1),
+(20, 'Harper White', 'harper.white', '2000-02-18', 'Female', 'harper.w@email.com', 1, 1),
+(21, 'Alexander Harris', 'alexander.harris', '1993-06-11', 'Male', 'alexander.h@email.com', 1, 1),
+(22, 'Evelyn Clark', 'evelyn.clark', '1987-12-24', 'Female', 'evelyn.c@email.com', 1, 1),
+(23, 'Michael Lewis', 'michael.lewis', '1996-08-16', 'Male', 'michael.l@email.com', 1, 1),
+(24, 'Abigail Robinson', 'abigail.robinson', '1984-01-31', 'Female', 'abigail.r@email.com', 1, 1),
+(25, 'Daniel Walker', 'daniel.walker', '1990-10-03', 'Male', 'daniel.w@email.com', 1, 1),
+(26, 'Emily Young', 'emily.young', '2002-05-05', 'Female', 'emily.y@email.com', 1, 1),
+(27, 'Matthew Allen', 'matthew.allen', '1982-07-14', 'Male', 'matthew.a@email.com', 1, 1),
+(28, 'Elizabeth King', 'elizabeth.king', '1994-09-23', 'Female', 'elizabeth.k@email.com', 1, 1),
+(29, 'Joseph Wright', 'joseph.wright', '1978-02-09', 'Male', 'joseph.w@email.com', 1, 1),
+(30, 'Sofia Scott', 'sofia.scott', '2004-11-11', 'Female', 'sofia.s@email.com', 1, 1),
+(31, 'David Green', 'david.green', '1991-04-15', 'Male', 'david.g@email.com', 1, 1),
+(32, 'Avery Adams', 'avery.adams', '1989-08-18', 'Female', 'avery.a@email.com', 1, 1),
+(33, 'Samuel Baker', 'samuel.baker', '1998-03-20', 'Male', 'samuel.b@email.com', 1, 1),
+(34, 'Grace Nelson', 'grace.nelson', '1992-01-07', 'Female', 'grace.n@email.com', 1, 1),
+(35, 'Christopher Carter', 'christopher.carter', '1981-06-01', 'Male', 'christopher.c@email.com', 1, 1),
+(36, 'Chloe Mitchell', 'chloe.mitchell', '2001-09-08', 'Female', 'chloe.m@email.com', 1, 1),
+(37, 'Andrew Perez', 'andrew.perez', '1995-02-25', 'Male', 'andrew.p@email.com', 1, 1),
+(38, 'Victoria Roberts', 'victoria.roberts', '1987-05-13', 'Female', 'victoria.r@email.com', 1, 1),
+(39, 'Joshua Turner', 'joshua.turner', '1993-11-19', 'Male', 'joshua.t@email.com', 1, 1),
+(40, 'Madison Phillips', 'madison.phillips', '1999-07-29', 'Female', 'madison.p@email.com', 1, 1),
+(41, 'Anthony Campbell', 'anthony.campbell', '1985-04-04', 'Male', 'anthony.c@email.com', 1, 1),
+(42, 'Lily Parker', 'lily.parker', '2000-12-12', 'Female', 'lily.p@email.com', 1, 1),
+(43, 'Ryan Evans', 'ryan.evans', '1997-08-26', 'Male', 'ryan.e@email.com', 1, 1),
+(44, 'Hannah Edwards', 'hannah.edwards', '1990-02-14', 'Female', 'hannah.e@email.com', 1, 1),
+(45, 'Nicholas Collins', 'nicholas.collins', '1983-10-30', 'Male', 'nicholas.c@email.com', 1, 1),
+(46, 'Addison Stewart', 'addison.stewart', '2003-03-03', 'Female', 'addison.s@email.com', 1, 1),
+(47, 'Tyler Morris', 'tyler.morris', '1996-09-05', 'Male', 'tyler.m@email.com', 1, 1),
+(48, 'Natalie Rogers', 'natalie.rogers', '1988-06-20', 'Female', 'natalie.r@email.com', 1, 1),
+(49, 'Brandon Reed', 'brandon.reed', '1994-01-17', 'Male', 'brandon.r@email.com', 1, 1),
+(50, 'Zoe Cook', 'zoe.cook', '2002-08-01', 'Female', 'zoe.c@email.com', 1, 1),
+(51, 'Justin Morgan', 'justin.morgan', '1986-04-22', 'Male', 'justin.m@email.com', 1, 1),
+(52, 'Leah Bell', 'leah.bell', '1999-10-18', 'Female', 'leah.b@email.com', 1, 1);
 
 -- LAB_TESTS
-INSERT INTO lab_tests (name, category, price, lab_id)
-VALUES
-    ('Complete Blood Count (CBC)', 'Hematology', 25.00, 1),
-    ('Blood Glucose', 'Chemistry', 35.00, 1),
-    ('Urinalysis', 'Urinalysis', 20.00, 2),
-    ('Lipid Panel', 'Chemistry', 40.00, 2);
-
--- REQUISITIONS
-INSERT INTO requisitions (patient_id, doctor_name, date, status, created_by_id, lab_id)
-VALUES (1, 'Dr. Smith', CURRENT_TIMESTAMP, 'PROCESSING', 1, 1);
-INSERT INTO requisitions (patient_id, doctor_name, date, status, created_by_id, lab_id)
-VALUES (2, 'Dr. Jones', CURRENT_TIMESTAMP, 'PROCESSING', 4, 2);
-
--- REQUISITION_TESTS
-INSERT INTO requisition_tests (requisition_id, test_id)
-VALUES (1, 1), (1, 2);
-INSERT INTO requisition_tests (requisition_id, test_id)
-VALUES (2, 3), (2, 4);
+INSERT INTO lab_tests (id, name, category, price, lab_id) VALUES
+(1, 'Complete Blood Count (CBC)', 'Hematology', 25.00, 1),
+(2, 'Blood Glucose', 'Chemistry', 35.00, 1),
+(3, 'Urinalysis', 'Urinalysis', 20.00, 1),
+(4, 'Lipid Panel', 'Chemistry', 40.00, 1),
+(5, 'TSH', 'Endocrinology', 50.00, 1),
+(6, 'Hepatitis B Panel', 'Virology', 75.00, 2);
 
 -- INVENTORY
-INSERT INTO inventory (name, category, quantity, low_stock_threshold, supplier, added_by_id, lab_id)
-VALUES ('Test Tubes', 'Consumables', 100, 10, 'LabSupplier', 1, 1);
-INSERT INTO inventory (name, category, quantity, low_stock_threshold, supplier, added_by_id, lab_id)
-VALUES ('Microscope Slides', 'Consumables', 200, 20, 'BioSupply', 4, 2);
+INSERT INTO inventory (id, name, category, quantity, low_stock_threshold, supplier, added_by_id, lab_id) VALUES
+(1, 'Test Tubes', 'Consumables', 100, 10, 'LabSupplier', 1, 1),
+(2, 'Microscope Slides', 'Consumables', 200, 20, 'BioSupply', 4, 2);
+
+-- REQUISITIONS (22 total)
+INSERT INTO requisitions (id, patient_id, doctor_name, date, status, created_by_id, lab_id, completion_date) VALUES
+(1, 1, 'Dr. Smith', '2023-10-01T10:00:00Z', 'COMPLETED', 1, 1, '2023-10-01T18:00:00Z'),
+(2, 2, 'Dr. Jones', '2023-10-02T11:30:00Z', 'COLLECTED', 4, 2, NULL),
+(3, 3, 'Dr. Evelyn Reed', '2023-10-03T09:00:00Z', 'PROCESSING', 3, 1, NULL),
+(4, 4, 'Dr. Samuel Cho', '2023-10-04T14:00:00Z', 'CANCELLED', 1, 1, NULL),
+(5, 5, 'Dr. Olivia Blue', '2023-10-05T16:20:00Z', 'COMPLETED', 3, 1, '2023-10-06T10:00:00Z'),
+(6, 6, 'Dr. Evelyn Reed', '2023-10-06T08:00:00Z', 'IN_TRANSIT', 1, 1, NULL),
+(7, 7, 'Dr. Samuel Cho', '2023-10-07T13:15:00Z', 'PROCESSING', 1, 1, NULL),
+(8, 8, 'Dr. Olivia Blue', '2023-10-08T15:00:00Z', 'COMPLETED', 3, 1, '2023-10-09T11:00:00Z'),
+(9, 9, 'Dr. Evelyn Reed', '2023-10-09T10:30:00Z', 'COLLECTED', 1, 1, NULL),
+(10, 10, 'Dr. Samuel Cho', '2023-10-10T12:00:00Z', 'PROCESSING', 3, 1, NULL),
+(11, 11, 'Dr. Olivia Blue', '2023-10-11T11:00:00Z', 'COMPLETED', 1, 1, '2023-10-11T19:00:00Z'),
+(12, 12, 'Dr. Evelyn Reed', '2023-10-12T09:45:00Z', 'IN_TRANSIT', 1, 1, NULL),
+(13, 13, 'Dr. Samuel Cho', '2023-10-13T16:00:00Z', 'PROCESSING', 3, 1, NULL),
+(14, 14, 'Dr. Olivia Blue', '2023-10-14T14:30:00Z', 'CANCELLED', 1, 1, NULL),
+(15, 15, 'Dr. Evelyn Reed', '2023-10-15T10:10:00Z', 'COMPLETED', 3, 1, '2023-10-16T09:00:00Z'),
+(16, 16, 'Dr. Samuel Cho', '2023-10-16T11:00:00Z', 'COLLECTED', 1, 1, NULL),
+(17, 17, 'Dr. Olivia Blue', '2023-10-17T09:00:00Z', 'PROCESSING', 1, 1, NULL),
+(18, 18, 'Dr. Evelyn Reed', '2023-10-18T13:30:00Z', 'COMPLETED', 3, 1, '2023-10-19T12:00:00Z'),
+(19, 19, 'Dr. Samuel Cho', '2023-10-19T15:00:00Z', 'IN_TRANSIT', 1, 1, NULL),
+(20, 20, 'Dr. Olivia Blue', '2023-10-20T10:00:00Z', 'PROCESSING', 3, 1, NULL),
+(21, 21, 'Dr. Evelyn Reed', '2023-10-21T11:00:00Z', 'COLLECTED', 1, 1, NULL),
+(22, 22, 'Dr. Samuel Cho', '2023-10-22T09:30:00Z', 'PROCESSING', 1, 1, NULL);
+
+-- REQUISITION_TESTS
+INSERT INTO requisition_tests (requisition_id, test_id) VALUES
+(1, 1), (1, 2),
+(2, 6),
+(3, 1), (3, 3),
+(5, 1), (5, 2),
+(6, 4),
+(7, 1), (7, 5),
+(8, 2),
+(9, 1),
+(10, 3), (10, 4),
+(11, 1), (11, 2), (11, 5),
+(12, 4),
+(13, 1),
+(15, 5),
+(16, 1),
+(17, 2), (17, 4),
+(18, 1), (18, 3), (18, 5),
+(19, 2),
+(20, 1),
+(21, 4),
+(22, 1), (22, 2);
+
+-- AUDIT LOG (20 examples)
+INSERT INTO audit_log (timestamp, user_id, action, details, lab_id) VALUES
+(CURRENT_TIMESTAMP - INTERVAL '10' DAY, 2, 'USER_LOGIN_SUCCESS', 'User ''manager'' logged in successfully.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '9' DAY, 1, 'PATIENT_CREATED', 'Patient ''Liam Johnson'' (ID: 3) was created.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '9' DAY, 1, 'PATIENT_CREATED', 'Patient ''Olivia Williams'' (ID: 4) was created.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '8' DAY, 2, 'INVENTORY_CREATED', 'Inventory item ''Syringes'' (ID: 3) was created.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '8' DAY, 3, 'REQUISITION_CREATED', 'Requisition for patient ''Noah Brown'' (ID: 5) was created.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '7' DAY, 1, 'REQUISITION_STATUS_CHANGED', 'Requisition (ID: 1) status changed to COMPLETED.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '7' DAY, 4, 'USER_LOGIN_SUCCESS', 'User ''bob'' logged in successfully.', 2),
+(CURRENT_TIMESTAMP - INTERVAL '6' DAY, 5, 'USER_LOGIN_FAILURE', 'Failed login attempt for user ''admin''.', 2),
+(CURRENT_TIMESTAMP - INTERVAL '6' DAY, 2, 'LAB_TEST_CREATED', 'Lab Test ''TSH'' (ID: 5) was created.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '5' DAY, 3, 'PATIENT_UPDATED', 'Patient ''John Doe'' (ID: 1) was updated.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '5' DAY, 1, 'INVENTORY_UPDATED', 'Inventory item ''Test Tubes'' (ID: 1) quantity updated to 80.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '4' DAY, 2, 'REQUISITION_STATUS_CHANGED', 'Requisition (ID: 4) status changed to CANCELLED.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '4' DAY, 1, 'PATIENT_DELETED', 'Patient ''Zoe Cook'' (ID: 50) was deleted.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '3' DAY, 3, 'REQUISITION_CREATED', 'Requisition for patient ''Emma Jones'' (ID: 6) was created.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '3' DAY, 4, 'INVENTORY_UPDATED', 'Inventory item ''Microscope Slides'' (ID: 2) quantity updated to 150.', 2),
+(CURRENT_TIMESTAMP - INTERVAL '2' DAY, 2, 'USER_ROLE_CHANGED', 'User ''alice'' (ID: 1) role changed to Manager.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '2' DAY, 1, 'REQUISITION_STATUS_CHANGED', 'Requisition (ID: 5) status changed to COMPLETED.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '1' DAY, 5, 'USER_LOGIN_SUCCESS', 'User ''branchmanager'' logged in successfully.', 2),
+(CURRENT_TIMESTAMP - INTERVAL '1' DAY, 3, 'PATIENT_CREATED', 'Patient ''New Patient'' (ID: 53) was created.', 1),
+(CURRENT_TIMESTAMP, 1, 'USER_LOGOUT', 'User ''alice'' logged out.', 1);
+
+-- Reset sequences to avoid primary key conflicts
+ALTER TABLE patients ALTER COLUMN id RESTART WITH 53;
+ALTER TABLE requisitions ALTER COLUMN id RESTART WITH 23;
+ALTER TABLE lab_tests ALTER COLUMN id RESTART WITH 7;
+ALTER TABLE inventory ALTER COLUMN id RESTART WITH 3;
+ALTER TABLE staff_users ALTER COLUMN id RESTART WITH 6;

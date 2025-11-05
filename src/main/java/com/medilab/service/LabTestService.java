@@ -9,11 +9,14 @@ import com.medilab.repository.LabRepository;
 import com.medilab.repository.LabTestRepository;
 import com.medilab.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.stream.Collectors;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -24,11 +27,18 @@ public class LabTestService {
     private final LabRepository labRepository;
     private final AuditLogService auditLogService;
 
-    public List<LabTestDto> getLabTests() {
+    public Page<LabTestDto> getLabTests(int page, int limit, String q, String sort, String order) {
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return labTestRepository.findByLabId(user.getLabId()).stream()
-                .map(labTestMapper::toDto)
-                .collect(Collectors.toList());
+        Sort.Direction direction = Sort.Direction.fromString(order);
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(direction, sort));
+
+        Specification<LabTest> spec = Specification.where((root, query, cb) -> cb.equal(root.get("lab").get("id"), user.getLabId()));
+
+        if (StringUtils.hasText(q)) {
+            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + q.toLowerCase() + "%"));
+        }
+
+        return labTestRepository.findAll(spec, pageable).map(labTestMapper::toDto);
     }
 
     public LabTestDto addLabTest(LabTestDto labTestDto) {

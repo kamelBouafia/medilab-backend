@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Set;
 
@@ -39,6 +40,9 @@ public class Requisition {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private SampleStatus status = SampleStatus.PROCESSING;
+
+    @Column(name = "completion_date")
+    private LocalDateTime completionDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "createdById", nullable = false)
