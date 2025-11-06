@@ -2,6 +2,7 @@ package com.medilab.controller;
 
 import com.medilab.dto.PatientDto;
 import com.medilab.service.PatientService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
@@ -34,12 +35,12 @@ public class PatientController {
     }
 
     @PostMapping
-    public ResponseEntity<PatientDto> createPatient(@RequestBody PatientDto patientDto) {
+    public ResponseEntity<PatientDto> createPatient(@Valid @RequestBody PatientDto patientDto) {
         return new ResponseEntity<>(patientService.createPatient(patientDto), HttpStatus.CREATED);
     }
 
     @PutMapping("/{patientId}")
-    public ResponseEntity<PatientDto> updatePatient(@PathVariable Long patientId, @RequestBody PatientDto patientDto) {
+    public ResponseEntity<PatientDto> updatePatient(@PathVariable Long patientId, @Valid @RequestBody PatientDto patientDto) {
         return ResponseEntity.ok(patientService.updatePatient(patientId, patientDto));
     }
 

@@ -23,9 +23,10 @@ server:
 
 app:
   jwt:
-    secret: "B374A26A71490437AA024E4FADD5B497FDFF1A8EA6FF12A5E8216A951522D"
-    expiration: 86400
-  gemini-api-key: "optional_gemini_api_key_here"
+    # Allow overriding the JWT secret via environment variable APP_JWT_SECRET; fallback to existing value
+    secret: ${APP_JWT_SECRET:B374A26A71490437AA024E4FADD5B497FDFF1A8EA6FF12A5E8216A951522D}
+    expiration: ${APP_JWT_EXPIRATION:86400}
+  gemini-api-key: ${GEMINI_API_KEY:optional_gemini_api_key_here}
 
 logging:
   level:

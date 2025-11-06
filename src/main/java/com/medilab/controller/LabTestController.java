@@ -2,6 +2,7 @@ package com.medilab.controller;
 
 import com.medilab.dto.LabTestDto;
 import com.medilab.service.LabTestService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
@@ -34,12 +35,12 @@ public class LabTestController {
     }
 
     @PostMapping
-    public ResponseEntity<LabTestDto> addLabTest(@RequestBody LabTestDto labTestDto) {
+    public ResponseEntity<LabTestDto> addLabTest(@Valid @RequestBody LabTestDto labTestDto) {
         return new ResponseEntity<>(labTestService.addLabTest(labTestDto), HttpStatus.CREATED);
     }
 
     @PutMapping("/{testId}")
-    public ResponseEntity<LabTestDto> updateLabTest(@PathVariable Long testId, @RequestBody LabTestDto labTestDto) {
+    public ResponseEntity<LabTestDto> updateLabTest(@PathVariable Long testId, @Valid @RequestBody LabTestDto labTestDto) {
         return ResponseEntity.ok(labTestService.updateLabTest(testId, labTestDto));
     }
 

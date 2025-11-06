@@ -5,6 +5,7 @@ import com.medilab.dto.LoginResponse;
 import com.medilab.dto.PatientLoginRequest;
 import com.medilab.security.AuthenticatedUser;
 import com.medilab.security.JwtUtil;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,7 +24,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest loginRequest) {
+    public LoginResponse login(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
@@ -34,7 +35,7 @@ public class AuthController {
     }
 
     @PostMapping("/patient/login")
-    public LoginResponse patientLogin(@RequestBody PatientLoginRequest loginRequest) {
+    public LoginResponse patientLogin(@Valid @RequestBody PatientLoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getDob().toString()));
 

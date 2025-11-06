@@ -2,20 +2,17 @@ package com.medilab.controller;
 
 import com.medilab.dto.TestResultDto;
 import com.medilab.service.TestResultService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
-@RequestMapping("/api/results")
+@RequestMapping("/api/test-results")
 @PreAuthorize("hasRole('Staff')")
 @RequiredArgsConstructor
 public class TestResultController {
@@ -23,8 +20,8 @@ public class TestResultController {
     private final TestResultService testResultService;
 
     @PostMapping
-    public ResponseEntity<?> saveTestResults(@RequestBody List<TestResultDto> testResultDtos) {
+    public ResponseEntity<?> saveTestResults(@Valid @RequestBody List<TestResultDto> testResultDtos) {
         testResultService.saveTestResults(testResultDtos);
-        return new ResponseEntity<>(Map.of("message", "Results saved successfully"), HttpStatus.CREATED);
+        return new ResponseEntity<>(java.util.Map.of("message", "Results saved successfully"), HttpStatus.CREATED);
     }
 }

@@ -2,6 +2,7 @@ package com.medilab.controller;
 
 import com.medilab.dto.RequisitionDto;
 import com.medilab.service.RequisitionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
@@ -36,13 +37,13 @@ public class RequisitionController {
     }
 
     @PostMapping
-    public ResponseEntity<RequisitionDto> createRequisition(@RequestBody RequisitionDto requisitionDto) {
+    public ResponseEntity<RequisitionDto> createRequisition(@Valid @RequestBody RequisitionDto requisitionDto) {
         RequisitionDto createdRequisition = requisitionService.createRequisition(requisitionDto);
         return new ResponseEntity<>(createdRequisition, HttpStatus.CREATED);
     }
 
     @PatchMapping("/{requisitionId}/status")
-    public ResponseEntity<RequisitionDto> updateRequisitionStatus(@PathVariable Long requisitionId, @RequestBody RequisitionDto requisitionDto) {
+    public ResponseEntity<RequisitionDto> updateRequisitionStatus(@PathVariable Long requisitionId, @Valid @RequestBody RequisitionDto requisitionDto) {
         RequisitionDto updatedRequisition = requisitionService.updateRequisitionStatus(requisitionId, requisitionDto);
         return ResponseEntity.ok(updatedRequisition);
     }

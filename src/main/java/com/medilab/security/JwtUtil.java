@@ -3,11 +3,17 @@ package com.medilab.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +29,32 @@ public class JwtUtil {
     @Value("${app.jwt.expiration}")
     private Long expiration;
 
+    private SecretKey secretKey;
+
+    @PostConstruct
+    public void init() {
+        // Try to decode the configured secret as Base64 first; if that fails, use raw UTF-8 bytes.
+        // If the resulting key material is shorter than 32 bytes (256 bits), derive a 256-bit key via SHA-256.
+        try {
+            byte[] keyBytes;
+            try {
+                keyBytes = Decoders.BASE64.decode(secret);
+            } catch (IllegalArgumentException ex) {
+                keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+            }
+
+            if (keyBytes.length < 32) {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                keyBytes = digest.digest(keyBytes);
+            }
+
+            this.secretKey = Keys.hmacShaKeyFor(keyBytes);
+        } catch (Exception e) {
+            // fallback: use raw secret bytes (not recommended)
+            this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
     public String generateToken(AuthenticatedUser authenticatedUser) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", authenticatedUser.getId());
@@ -37,7 +69,7 @@ public class JwtUtil {
     private String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
-                .signWith(SignatureAlgorithm.HS256, secret).compact();
+                .signWith(secretKey, SignatureAlgorithm.HS256).compact();
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
@@ -50,7 +82,7 @@ public class JwtUtil {
     }
 
     public Claims extractAllClaims(String token) {
-        return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody();
+        return Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token).getBody();
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
