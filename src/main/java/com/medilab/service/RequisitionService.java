@@ -55,14 +55,36 @@ public class RequisitionService {
             }
 
             params.forEach((key, values) -> {
-                if (key.equals("status_ne")) {
-                    for (String value : values) {
-                        try {
-                            predicates.add(cb.notEqual(root.get("status"), SampleStatus.valueOf(value)));
-                        } catch (IllegalArgumentException e) {
-                            // Ignore invalid status values
+                switch (key) {
+                    case "status_ne":
+                        for (String value : values) {
+                            try {
+                                predicates.add(cb.notEqual(root.get("status"), SampleStatus.valueOf(value)));
+                            } catch (IllegalArgumentException e) {
+                                // Ignore invalid status values
+                            }
                         }
-                    }
+                        break;
+                    case "id":
+                        if (values.get(0) != null) {
+                            predicates.add(root.get("id").in(values.stream().map(Long::valueOf).toList()));
+                        }
+                        break;
+                    case "patientId":
+                        if (values.get(0) != null) {
+                            predicates.add(root.get("patient").get("id").in(values.stream().map(Long::valueOf).toList()));
+                        }
+                        break;
+                    case "createdById":
+                        if (values.get(0) != null) {
+                            predicates.add(root.get("createdBy").get("id").in(values.stream().map(Long::valueOf).toList()));
+                        }
+                        break;
+                    case "status":
+                        if (values.get(0) != null) {
+                            predicates.add(root.get("status").in(values.stream().map(SampleStatus::valueOf).toList()));
+                        }
+                        break;
                 }
             });
 
