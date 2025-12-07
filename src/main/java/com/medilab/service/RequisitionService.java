@@ -25,6 +25,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +43,14 @@ public class RequisitionService {
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Sort.Direction direction = Sort.Direction.fromString(order);
         Pageable pageable = PageRequest.of(page > 0 ? page - 1 : 0, limit, Sort.by(direction, sort));
+
+        if (params.containsKey("patientId")) {
+            List<Long> patientIds = params.get("patientId").stream().map(Long::valueOf).toList();
+            if (patientIds.size() == 1) {
+                return requisitionRepository.findByPatientIdAndLabIdWithTestsAndResults(patientIds.get(0), user.getLabId(), pageable)
+                        .map(requisitionMapper::toDto);
+            }
+        }
 
         Specification<Requisition> spec = (root, query, cb) -> {
             if (query.getResultType() != Long.class) {
@@ -94,6 +104,13 @@ public class RequisitionService {
         };
 
         return requisitionRepository.findAll(spec, pageable).map(requisitionMapper::toDto);
+    }
+
+    public RequisitionDto getRequisitionById(Long id) {
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Optional<Requisition> requisitionOptional = requisitionRepository.findByIdAndLabIdWithTestsAndResults(id, user.getLabId());
+        Requisition requisition = requisitionOptional.orElseThrow(() -> new ResourceNotFoundException("Requisition not found with id: " + id));
+        return requisitionMapper.toDto(requisition);
     }
 
     public RequisitionDto createRequisition(RequisitionDto requisitionDto) {
