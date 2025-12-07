@@ -24,13 +24,13 @@ public class RequisitionController {
 
     @GetMapping
     public ResponseEntity<List<RequisitionDto>> getRequisitions(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "0") int _page,
+            @RequestParam(defaultValue = "10") int _limit,
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "id") String _sort,
             @RequestParam(defaultValue = "desc") String _order,
             @RequestParam MultiValueMap<String, String> params) {
-        Page<RequisitionDto> requisitionPage = requisitionService.getRequisitions(page, limit, q, _sort, _order, params);
+        Page<RequisitionDto> requisitionPage = requisitionService.getRequisitions(_page, _limit, q, _sort, _order, params);
         HttpHeaders headers = new HttpHeaders();
         headers.add("X-Total-Count", String.valueOf(requisitionPage.getTotalElements()));
         return ResponseEntity.ok().headers(headers).body(requisitionPage.getContent());

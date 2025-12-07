@@ -16,7 +16,7 @@ public interface PatientMapper {
 
     @Mappings({
         @Mapping(source = "createdBy.id", target = "createdById"),
-        @Mapping(target = "age", expression = "java(Period.between(patient.getDob(), LocalDate.now()).getYears())"),
+//        @Mapping(target = "age", expression = "java(Period.between(patient.getDob(), LocalDate.now()).getYears())"),
         @Mapping(source = "dob", target = "dob", qualifiedByName = "localDateToString"),
         @Mapping(source = "gender", target = "gender", qualifiedByName = "genderToString")
     })

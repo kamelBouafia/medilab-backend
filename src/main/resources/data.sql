@@ -73,7 +73,27 @@ INSERT INTO lab_tests (id, name, category, price, lab_id) VALUES
 (3, 'Urinalysis', 'Urinalysis', 20.00, 1),
 (4, 'Lipid Panel', 'Chemistry', 40.00, 1),
 (5, 'TSH', 'Endocrinology', 50.00, 1),
-(6, 'Hepatitis B Panel', 'Virology', 75.00, 2);
+(6, 'Hepatitis B Panel', 'Virology', 75.00, 2),
+(7, 'Basic Metabolic Panel (BMP)', 'Chemistry', 45.00, 1),
+(8, 'Comprehensive Metabolic Panel (CMP)', 'Chemistry', 60.00, 1),
+(9, 'Prothrombin Time (PT)', 'Hematology', 30.00, 1),
+(10, 'Activated Partial Thromboplastin Time (aPTT)', 'Hematology', 32.00, 1),
+(11, 'Hemoglobin A1c (HbA1c)', 'Endocrinology', 48.00, 1),
+(12, 'Liver Function Tests (LFTs)', 'Chemistry', 55.00, 1),
+(13, 'Kidney Function Tests', 'Chemistry', 52.00, 1),
+(14, 'C-Reactive Protein (CRP)', 'Immunology', 42.00, 1),
+(15, 'Erythrocyte Sedimentation Rate (ESR)', 'Hematology', 28.00, 1),
+(16, 'Thyroid Panel (T3, T4, TSH)', 'Endocrinology', 85.00, 1),
+(17, 'Vitamin D, 25-Hydroxy', 'Chemistry', 65.00, 1),
+(18, 'Iron and Total Iron Binding Capacity (TIBC)', 'Hematology', 58.00, 1),
+(19, 'Urine Culture', 'Microbiology', 40.00, 1),
+(20, 'Blood Culture', 'Microbiology', 70.00, 1),
+(21, 'Stool Analysis', 'Microbiology', 35.00, 1),
+(22, 'Pap Smear', 'Cytology', 90.00, 1),
+(23, 'PSA (Prostate-Specific Antigen)', 'Immunology', 75.00, 1),
+(24, 'Cholesterol Test', 'Chemistry', 22.00, 1),
+(25, 'Triglycerides Test', 'Chemistry', 23.00, 1),
+(26, 'HIV Test', 'Virology', 80.00, 1);
 
 -- INVENTORY
 INSERT INTO inventory (id, name, category, quantity, low_stock_threshold, supplier, added_by_id, lab_id) VALUES
@@ -154,6 +174,6 @@ INSERT INTO audit_log (timestamp, user_id, action, details, lab_id) VALUES
 -- Reset sequences to avoid primary key conflicts
 ALTER TABLE patients ALTER COLUMN id RESTART WITH 53;
 ALTER TABLE requisitions ALTER COLUMN id RESTART WITH 23;
-ALTER TABLE lab_tests ALTER COLUMN id RESTART WITH 7;
+ALTER TABLE lab_tests ALTER COLUMN id RESTART WITH 27;
 ALTER TABLE inventory ALTER COLUMN id RESTART WITH 3;
 ALTER TABLE staff_users ALTER COLUMN id RESTART WITH 6;
