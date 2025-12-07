@@ -7,6 +7,7 @@ import com.medilab.mapper.TestResultMapper;
 import com.medilab.repository.RequisitionRepository;
 import com.medilab.repository.TestResultRepository;
 import com.medilab.security.AuthenticatedUser;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class PatientDataService {
     @Autowired
     private TestResultMapper testResultMapper;
 
+    @Transactional
     public List<RequisitionDto> getPatientRequisitions() {
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return requisitionRepository.findByPatientIdAndLabIdWithTests(user.getId(), user.getLabId()).stream()
