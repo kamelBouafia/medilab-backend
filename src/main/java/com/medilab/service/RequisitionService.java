@@ -39,6 +39,7 @@ public class RequisitionService {
     private final LabTestRepository labTestRepository;
     private final RequisitionMapper requisitionMapper;
 
+    @Transactional(readOnly = true)
     public Page<RequisitionDto> getRequisitions(int page, int limit, String q, String sort, String order, MultiValueMap<String, String> params) {
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Sort.Direction direction = Sort.Direction.fromString(order);

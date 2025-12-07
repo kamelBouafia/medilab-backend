@@ -1,15 +1,23 @@
+-- Defensive schema updates (idempotent where supported)
+ALTER TABLE IF EXISTS staff_users ADD COLUMN IF NOT EXISTS force_password_change BOOLEAN DEFAULT FALSE;
+ALTER TABLE IF EXISTS labs ADD COLUMN IF NOT EXISTS contact_email VARCHAR(255);
+ALTER TABLE IF EXISTS labs ADD COLUMN IF NOT EXISTS license_number VARCHAR(255);
+ALTER TABLE IF EXISTS labs ADD COLUMN IF NOT EXISTS trial_start TIMESTAMP;
+ALTER TABLE IF EXISTS labs ADD COLUMN IF NOT EXISTS trial_end TIMESTAMP;
+
 -- LABS
-INSERT INTO labs (name) VALUES ('Main Lab');
-INSERT INTO labs (name) VALUES ('Branch Lab');
+-- Set trial_start to now and trial_end to 30 days from now for sample data
+INSERT INTO labs (name, contact_email, license_number, trial_start, trial_end) VALUES ('Main Lab', 'main@lab.local', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '30' DAY);
+INSERT INTO labs (name, contact_email, license_number, trial_start, trial_end) VALUES ('Branch Lab', 'branch@lab.local', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '30' DAY);
 
 -- STAFF_USERS
 -- The password for all users is 'password'
-INSERT INTO staff_users (id, name, username, password, role, lab_id) VALUES
-(1, 'Alice', 'alice', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1),
-(2, 'Manager', 'manager', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Manager', 1),
-(3, 'Technician', 'technician', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1),
-(4, 'Bob', 'bob', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 2),
-(5, 'BranchManager', 'branchmanager', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Manager', 2);
+INSERT INTO staff_users (id, name, username, password, role, lab_id, force_password_change) VALUES
+(1, 'Alice', 'alice', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1, false),
+(2, 'Manager', 'manager', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Manager', 1, false),
+(3, 'Technician', 'technician', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1, false),
+(4, 'Bob', 'bob', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 2, false),
+(5, 'BranchManager', 'branchmanager', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Manager', 2, false);
 
 -- PATIENTS (52 total)
 INSERT INTO patients (id, name, username, dob, gender, contact, created_by_id, lab_id) VALUES

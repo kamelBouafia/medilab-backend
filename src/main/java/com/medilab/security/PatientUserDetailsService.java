@@ -30,7 +30,8 @@ public class PatientUserDetailsService implements UserDetailsService {
                 patient.getUsername(),
                 patient.getDob().toString(),
                 List.of(new SimpleGrantedAuthority("ROLE_PATIENT")),
-                "patient"
+                "patient",
+                false
         );
     }
 }

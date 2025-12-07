@@ -62,6 +62,7 @@ public class JwtUtil {
         claims.put("username", authenticatedUser.getUsername()); // Added username as a custom claim
         claims.put("authorities", authenticatedUser.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
         claims.put("type", authenticatedUser.getUserType());
+        claims.put("forcePasswordChange", authenticatedUser.isForcePasswordChange());
 
         return createToken(claims, authenticatedUser.getUsername());
     }

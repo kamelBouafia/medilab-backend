@@ -27,11 +27,12 @@ public class PatientService {
     private final LabRepository labRepository;
     private final PatientMapper patientMapper;
     private final AuditLogService auditLogService;
+    private final TrialService trialService;
 
     public Page<PatientDto> getPatients(int page, int limit, String q, String sort, String order) {
         AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Sort.Direction direction = Sort.Direction.fromString(order);
-        Pageable pageable = PageRequest.of(page, limit, Sort.by(direction, sort));
+        Pageable pageable = PageRequest.of(page > 0 ? page - 1 : 0, limit, Sort.by(direction, sort));
 
         Specification<Patient> spec = Specification.where((root, query, cb) -> cb.equal(root.get("lab").get("id"), user.getLabId()));
 
@@ -54,6 +55,28 @@ public class PatientService {
 
         labRepository.findById(user.getLabId()).ifPresent(patient::setLab);
         staffUserRepository.findById(user.getId()).ifPresent(patient::setCreatedBy);
+
+        // Check trial status for the lab before creating a patient
+        labRepository.findById(user.getLabId()).ifPresent(lab -> trialService.assertTrialActive(lab));
+
+        // Ensure username exists -- use email or phone as default
+        if (!StringUtils.hasText(patient.getUsername())) {
+            String base;
+            if (StringUtils.hasText(patient.getEmail())) base = patient.getEmail();
+            else if (StringUtils.hasText(patient.getPhone())) base = patient.getPhone();
+            else {
+                // fallback to name + timestamp
+                base = patient.getName().replaceAll("\\s+", "").toLowerCase();
+                if (!StringUtils.hasText(base)) base = "patient" + System.currentTimeMillis();
+            }
+            String candidate = base;
+            int suffix = 1;
+            while (patientRepository.findByUsername(candidate).isPresent()) {
+                candidate = base + suffix;
+                suffix++;
+            }
+            patient.setUsername(candidate);
+        }
 
         Patient savedPatient = patientRepository.save(patient);
         auditLogService.logAction("PATIENT_CREATED", "Patient '" + savedPatient.getName() + "' (ID: " + savedPatient.getId() + ") was created.");

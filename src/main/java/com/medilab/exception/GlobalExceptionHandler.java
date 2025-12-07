@@ -36,6 +36,16 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, new HttpHeaders(), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(TrialExpiredException.class)
+    @ResponseBody
+    public ResponseEntity<Object> handleTrialExpired(TrialExpiredException ex) {
+        logger.info("Trial expired: {}", ex.getMessage());
+        Map<String, String> body = new HashMap<>();
+        body.put("error", "trial_expired");
+        body.put("message", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.PAYMENT_REQUIRED);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleAllExceptions(Exception ex) {
         // Log the full exception on the server for diagnostics, but return a sanitized message to the client.
