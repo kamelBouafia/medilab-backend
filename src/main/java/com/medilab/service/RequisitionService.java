@@ -7,6 +7,7 @@ import com.medilab.exception.ResourceNotFoundException;
 import com.medilab.mapper.RequisitionMapper;
 import com.medilab.repository.*;
 import com.medilab.security.AuthenticatedUser;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -44,7 +45,8 @@ public class RequisitionService {
         Specification<Requisition> spec = (root, query, cb) -> {
             if (query.getResultType() != Long.class) {
                 root.fetch("patient");
-                root.fetch("tests");
+                root.fetch("tests", JoinType.LEFT);
+                root.fetch("testResults", JoinType.LEFT);
             }
 
             List<Predicate> predicates = new ArrayList<>();
@@ -66,22 +68,22 @@ public class RequisitionService {
                         }
                         break;
                     case "id":
-                        if (values.get(0) != null) {
+                        if (values.getFirst() != null) {
                             predicates.add(root.get("id").in(values.stream().map(Long::valueOf).toList()));
                         }
                         break;
                     case "patientId":
-                        if (values.get(0) != null) {
+                        if (values.getFirst() != null) {
                             predicates.add(root.get("patient").get("id").in(values.stream().map(Long::valueOf).toList()));
                         }
                         break;
                     case "createdById":
-                        if (values.get(0) != null) {
+                        if (values.getFirst() != null) {
                             predicates.add(root.get("createdBy").get("id").in(values.stream().map(Long::valueOf).toList()));
                         }
                         break;
                     case "status":
-                        if (values.get(0) != null) {
+                        if (values.getFirst() != null) {
                             predicates.add(root.get("status").in(values.stream().map(SampleStatus::valueOf).toList()));
                         }
                         break;

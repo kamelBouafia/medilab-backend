@@ -11,6 +11,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -59,4 +60,7 @@ public class Requisition {
             inverseJoinColumns = @JoinColumn(name = "testId")
     )
     private Set<LabTest> tests;
+
+    @OneToMany(mappedBy = "requisition")
+    private List<TestResult> testResults;
 }
