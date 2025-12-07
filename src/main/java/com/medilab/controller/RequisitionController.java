@@ -36,6 +36,12 @@ public class RequisitionController {
         return ResponseEntity.ok().headers(headers).body(requisitionPage.getContent());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<RequisitionDto> getRequisitionById(@PathVariable Long id) {
+        RequisitionDto requisitionDto = requisitionService.getRequisitionById(id);
+        return ResponseEntity.ok(requisitionDto);
+    }
+
     @PostMapping
     public ResponseEntity<RequisitionDto> createRequisition(@Valid @RequestBody RequisitionDto requisitionDto) {
         RequisitionDto createdRequisition = requisitionService.createRequisition(requisitionDto);

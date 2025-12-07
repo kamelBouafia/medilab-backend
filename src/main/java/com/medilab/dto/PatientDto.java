@@ -7,9 +7,13 @@ public class PatientDto {
     private Long id;
     private String name;
     private String username;
-    private int age;
-    private String gender;
-    private String contact;
+    private String phone;
+    private String email;
     private String dob; // YYYY-MM-DD
+    private String gender;
+    private String address;
+    private String bloodGroup;
+    private String allergies;
     private Long createdById;
+    private Long labId;
 }

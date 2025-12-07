@@ -26,13 +26,11 @@ public class StaffUser implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
-
-    @Column(unique = true, nullable = false)
     private String username;
-
-    @Column(nullable = false)
     private String password;
+    private String name;
+    private String email;
+    private String phone;
 
     @Enumerated(EnumType.STRING)
     private Role role;
