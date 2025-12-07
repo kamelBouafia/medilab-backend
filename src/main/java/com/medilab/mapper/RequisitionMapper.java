@@ -10,13 +10,13 @@ import org.mapstruct.Named;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring", uses = DateTimeMapper.class)
+@Mapper(componentModel = "spring", uses = {DateTimeMapper.class, LabTestMapper.class})
 public interface RequisitionMapper {
 
     @Mapping(source = "patient.id", target = "patientId")
     @Mapping(source = "patient.name", target = "patientName")
     @Mapping(source = "createdBy.id", target = "createdById")
-    @Mapping(source = "tests", target = "testIds", qualifiedByName = "testsToTestIds")
+    @Mapping(source = "tests", target = "tests")
     RequisitionDto toDto(Requisition requisition);
 
     @Mapping(target = "patient", ignore = true)

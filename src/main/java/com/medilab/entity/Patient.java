@@ -30,6 +30,7 @@ public class Patient {
 
     private String phone;
     private String email;
+    private String contact;
     private LocalDate dob;
 
     @Enumerated(EnumType.STRING)
