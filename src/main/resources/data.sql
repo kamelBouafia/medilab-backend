@@ -93,14 +93,34 @@ INSERT INTO lab_tests (id, name, category, price, lab_id) VALUES
 (23, 'PSA (Prostate-Specific Antigen)', 'Immunology', 75.00, 1),
 (24, 'Cholesterol Test', 'Chemistry', 22.00, 1),
 (25, 'Triglycerides Test', 'Chemistry', 23.00, 1),
-(26, 'HIV Test', 'Virology', 80.00, 1);
+(26, 'HIV Test', 'Virology', 80.00, 1),
+(27, 'New Test 1', 'Category 1', 10.00, 1),
+(28, 'New Test 2', 'Category 2', 12.50, 1),
+(29, 'New Test 3', 'Category 1', 15.00, 1),
+(30, 'New Test 4', 'Category 3', 20.00, 1),
+(31, 'New Test 5', 'Category 2', 22.00, 1),
+(32, 'New Test 6', 'Category 1', 18.50, 1),
+(33, 'New Test 7', 'Category 3', 30.00, 1),
+(34, 'New Test 8', 'Category 2', 25.00, 1),
+(35, 'New Test 9', 'Category 1', 12.00, 1),
+(36, 'New Test 10', 'Category 3', 35.00, 1),
+(37, 'New Test 11', 'Category 1', 10.00, 1),
+(38, 'New Test 12', 'Category 2', 12.50, 1),
+(39, 'New Test 13', 'Category 1', 15.00, 1),
+(40, 'New Test 14', 'Category 3', 20.00, 1),
+(41, 'New Test 15', 'Category 2', 22.00, 1),
+(42, 'New Test 16', 'Category 1', 18.50, 1),
+(43, 'New Test 17', 'Category 3', 30.00, 1),
+(44, 'New Test 18', 'Category 2', 25.00, 1),
+(45, 'New Test 19', 'Category 1', 12.00, 1),
+(46, 'New Test 20', 'Category 3', 35.00, 1);
 
 -- INVENTORY
 INSERT INTO inventory (id, name, category, quantity, low_stock_threshold, supplier, added_by_id, lab_id) VALUES
 (1, 'Test Tubes', 'Consumables', 100, 10, 'LabSupplier', 1, 1),
 (2, 'Microscope Slides', 'Consumables', 200, 20, 'BioSupply', 4, 2);
 
--- REQUISITIONS (22 total)
+-- REQUISITIONS (23 total)
 INSERT INTO requisitions (id, patient_id, doctor_name, date, status, created_by_id, lab_id, completion_date) VALUES
 (1, 1, 'Dr. Smith', '2023-10-01T10:00:00Z', 'COMPLETED', 1, 1, '2023-10-01T18:00:00Z'),
 (2, 2, 'Dr. Jones', '2023-10-02T11:30:00Z', 'COLLECTED', 4, 2, NULL),
@@ -123,7 +143,8 @@ INSERT INTO requisitions (id, patient_id, doctor_name, date, status, created_by_
 (19, 19, 'Dr. Samuel Cho', '2023-10-19T15:00:00Z', 'IN_TRANSIT', 1, 1, NULL),
 (20, 20, 'Dr. Olivia Blue', '2023-10-20T10:00:00Z', 'PROCESSING', 3, 1, NULL),
 (21, 21, 'Dr. Evelyn Reed', '2023-10-21T11:00:00Z', 'COLLECTED', 1, 1, NULL),
-(22, 22, 'Dr. Samuel Cho', '2023-10-22T09:30:00Z', 'PROCESSING', 1, 1, NULL);
+(22, 22, 'Dr. Samuel Cho', '2023-10-22T09:30:00Z', 'PROCESSING', 1, 1, NULL),
+(23, 1, 'Dr. Smith', '2023-10-23T10:00:00Z', 'COMPLETED', 1, 1, '2023-10-23T18:00:00Z');
 
 -- REQUISITION_TESTS
 INSERT INTO requisition_tests (requisition_id, test_id) VALUES
@@ -146,7 +167,44 @@ INSERT INTO requisition_tests (requisition_id, test_id) VALUES
 (19, 2),
 (20, 1),
 (21, 4),
-(22, 1), (22, 2);
+(22, 1), (22, 2),
+(23, 27), (23, 28), (23, 29), (23, 30), (23, 31), (23, 32), (23, 33), (23, 34), (23, 35), (23, 36),
+(23, 37), (23, 38), (23, 39), (23, 40), (23, 41), (23, 42), (23, 43), (23, 44), (23, 45), (23, 46);
+
+-- TEST_RESULTS
+INSERT INTO test_results (requisition_id, test_id, result_value, interpretation, entered_by_id, lab_id) VALUES
+(1, 1, '14.5', 'Normal', 1, 1),
+(1, 2, '95', 'Normal', 1, 1),
+(5, 1, '12.5', 'Normal', 3, 1),
+(5, 2, '105', 'High', 3, 1),
+(8, 2, '85', 'Normal', 3, 1),
+(11, 1, '15.0', 'Normal', 1, 1),
+(11, 2, '100', 'Normal', 1, 1),
+(11, 5, '2.5', 'Normal', 1, 1),
+(15, 5, '3.0', 'Normal', 3, 1),
+(18, 1, '13.5', 'Normal', 3, 1),
+(18, 3, 'Negative', 'Normal', 3, 1),
+(18, 5, '2.0', 'Normal', 3, 1),
+(23, 27, 'Result 1', 'Interpretation 1', 1, 1),
+(23, 28, 'Result 2', 'Interpretation 2', 1, 1),
+(23, 29, 'Result 3', 'Interpretation 3', 1, 1),
+(23, 30, 'Result 4', 'Interpretation 4', 1, 1),
+(23, 31, 'Result 5', 'Interpretation 5', 1, 1),
+(23, 32, 'Result 6', 'Interpretation 6', 1, 1),
+(23, 33, 'Result 7', 'Interpretation 7', 1, 1),
+(23, 34, 'Result 8', 'Interpretation 8', 1, 1),
+(23, 35, 'Result 9', 'Interpretation 9', 1, 1),
+(23, 36, 'Result 10', 'Interpretation 10', 1, 1),
+(23, 37, 'Result 11', 'Interpretation 11', 1, 1),
+(23, 38, 'Result 12', 'Interpretation 12', 1, 1),
+(23, 39, 'Result 13', 'Interpretation 13', 1, 1),
+(23, 40, 'Result 14', 'Interpretation 14', 1, 1),
+(23, 41, 'Result 15', 'Interpretation 15', 1, 1),
+(23, 42, 'Result 16', 'Interpretation 16', 1, 1),
+(23, 43, 'Result 17', 'Interpretation 17', 1, 1),
+(23, 44, 'Result 18', 'Interpretation 18', 1, 1),
+(23, 45, 'Result 19', 'Interpretation 19', 1, 1),
+(23, 46, 'Result 20', 'Interpretation 20', 1, 1);
 
 -- AUDIT LOG (20 examples)
 INSERT INTO audit_log (timestamp, user_id, action, details, lab_id) VALUES
@@ -173,7 +231,8 @@ INSERT INTO audit_log (timestamp, user_id, action, details, lab_id) VALUES
 
 -- Reset sequences to avoid primary key conflicts
 ALTER TABLE patients ALTER COLUMN id RESTART WITH 53;
-ALTER TABLE requisitions ALTER COLUMN id RESTART WITH 23;
-ALTER TABLE lab_tests ALTER COLUMN id RESTART WITH 27;
+ALTER TABLE requisitions ALTER COLUMN id RESTART WITH 24;
+ALTER TABLE lab_tests ALTER COLUMN id RESTART WITH 47;
 ALTER TABLE inventory ALTER COLUMN id RESTART WITH 3;
 ALTER TABLE staff_users ALTER COLUMN id RESTART WITH 6;
+ALTER TABLE test_results ALTER COLUMN id RESTART WITH 33;
