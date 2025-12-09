@@ -8,15 +8,15 @@ ALTER TABLE IF EXISTS labs ADD COLUMN IF NOT EXISTS trial_end TIMESTAMP;
 -- LABS
 -- Set trial_start to now and trial_end to 30 days from now for sample data
 INSERT INTO labs (name, contact_email, license_number, trial_start, trial_end) VALUES ('Main Lab', 'main@lab.local', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '30' DAY);
-INSERT INTO labs (name, contact_email, license_number, trial_start, trial_end) VALUES ('Branch Lab', 'branch@lab.local', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '30' DAY);
+INSERT INTO labs (name, contact_email, license_number, trial_start, trial_end) VALUES ('Branch Lab', 'branch@lab.local', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP - INTERVAL '30' DAY);
 
 -- STAFF_USERS
 -- The password for all users is 'password'
 INSERT INTO staff_users (id, name, username, password, role, lab_id, force_password_change) VALUES
-(1, 'Alice', 'alice', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1, false),
+(1, 'Alice', 'alice', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1, true),
 (2, 'Manager', 'manager', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Manager', 1, false),
 (3, 'Technician', 'technician', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1, false),
-(4, 'Bob', 'bob', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 2, false),
+(4, 'Bob', 'bob', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 2, true),
 (5, 'BranchManager', 'branchmanager', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Manager', 2, false);
 
 -- PATIENTS (52 total)
@@ -237,6 +237,34 @@ INSERT INTO audit_log (timestamp, user_id, action, details, lab_id) VALUES
 (CURRENT_TIMESTAMP - INTERVAL '1' DAY, 3, 'PATIENT_CREATED', 'Patient ''New Patient'' (ID: 53) was created.', 1),
 (CURRENT_TIMESTAMP, 1, 'USER_LOGOUT', 'User ''alice'' logged out.', 1);
 
+INSERT INTO support_tickets (ticket_id, name, email, subject, message, lab_id, user_id, status) VALUES
+('TICKET001', 'John Doe', 'john.doe@example.com', 'Login Issue', 'I cannot log in to my account.', 1, 1, 'OPEN'),
+('TICKET002', 'Jane Smith', 'jane.smith@example.com', 'Billing Inquiry', 'I have a question about my recent invoice.', 1, 2, 'OPEN'),
+('TICKET003', 'Peter Jones', 'peter.jones@example.com', 'Feature Request', 'It would be great to have a dark mode.', 2, 3, 'OPEN'),
+('TICKET004', 'Mary Johnson', 'mary.johnson@example.com', 'Bug Report', 'The dashboard is not loading correctly.', 2, 4, 'OPEN'),
+('TICKET005', 'David Williams', 'david.williams@example.com', 'General Question', 'How do I reset my password?', 3, 5, 'OPEN'),
+('TICKET006', 'Susan Brown', 'susan.brown@example.com', 'Login Issue', 'I am locked out of my account.', 3, 6, 'OPEN'),
+('TICKET007', 'Michael Davis', 'michael.davis@example.com', 'Billing Inquiry', 'There is an error on my bill.', 4, 7, 'OPEN'),
+('TICKET008', 'Karen Miller', 'karen.miller@example.com', 'Feature Request', 'Can you add support for exporting to PDF?', 4, 8, 'OPEN'),
+('TICKET009', 'James Wilson', 'james.wilson@example.com', 'Bug Report', 'The mobile app is crashing.', 5, 9, 'OPEN'),
+('TICKET010', 'Patricia Moore', 'patricia.moore@example.com', 'General Question', 'What are your hours of operation?', 5, 10, 'OPEN'),
+('TICKET011', 'Robert Taylor', 'robert.taylor@example.com', 'Login Issue', 'My username is not recognized.', 6, 11, 'OPEN'),
+('TICKET012', 'Jennifer Anderson', 'jennifer.anderson@example.com', 'Billing Inquiry', 'I was double-charged for my subscription.', 6, 12, 'OPEN'),
+('TICKET013', 'Charles Thomas', 'charles.thomas@example.com', 'Feature Request', 'Please add two-factor authentication.', 7, 13, 'OPEN'),
+('TICKET014', 'Linda Jackson', 'linda.jackson@example.com', 'Bug Report', 'I am unable to upload files.', 7, 14, 'OPEN'),
+('TICKET015', 'Thomas White', 'thomas.white@example.com', 'General Question', 'Do you offer a student discount?', 8, 15, 'OPEN'),
+('TICKET016', 'Barbara Harris', 'barbara.harris@example.com', 'Login Issue', 'I forgot my security question answers.', 8, 16, 'OPEN'),
+('TICKET017', 'Daniel Martin', 'daniel.martin@example.com', 'Billing Inquiry', 'My payment method was declined.', 9, 17, 'OPEN'),
+('TICKET018', 'Elizabeth Thompson', 'elizabeth.thompson@example.com', 'Feature Request', 'It would be helpful to have a search bar.', 9, 18, 'OPEN'),
+('TICKET019', 'Matthew Garcia', 'matthew.garcia@example.com', 'Bug Report', 'The website is not responsive on my tablet.', 10, 19, 'OPEN'),
+('TICKET020', 'Jessica Martinez', 'jessica.martinez@example.com', 'General Question', 'How can I update my contact information?', 10, 20, 'OPEN'),
+('TICKET021', 'Christopher Robinson', 'christopher.robinson@example.com', 'Login Issue', 'I am not receiving the password reset email.', 1, 21, 'OPEN'),
+('TICKET022', 'Ashley Clark', 'ashley.clark@example.com', 'Billing Inquiry', 'Can I get a refund?', 2, 22, 'OPEN'),
+('TICKET023', 'Joshua Rodriguez', 'joshua.rodriguez@example.com', 'Feature Request', 'Please add more notification options.', 3, 23, 'OPEN'),
+('TICKET024', 'Amanda Lewis', 'amanda.lewis@example.com', 'Bug Report', 'The new update broke the reporting feature.', 4, 24, 'OPEN'),
+('TICKET025', 'Brian Lee', 'brian.lee@example.com', 'General Question', 'What is the best way to contact support?', 5, 25, 'OPEN');
+
+
 -- Reset sequences to avoid primary key conflicts
 ALTER TABLE patients ALTER COLUMN id RESTART WITH 53;
 ALTER TABLE requisitions ALTER COLUMN id RESTART WITH 24;
@@ -244,3 +272,4 @@ ALTER TABLE lab_tests ALTER COLUMN id RESTART WITH 47;
 ALTER TABLE inventory ALTER COLUMN id RESTART WITH 3;
 ALTER TABLE staff_users ALTER COLUMN id RESTART WITH 6;
 ALTER TABLE test_results ALTER COLUMN id RESTART WITH 33;
+ALTER TABLE support_tickets ALTER COLUMN id RESTART WITH 26;
