@@ -4,7 +4,7 @@ import com.medilab.dto.SupportContactRequest;
 import com.medilab.dto.SupportContactResponse;
 import com.medilab.dto.SupportTicketDto;
 import com.medilab.service.SupportService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -25,14 +25,10 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/support")
 @Validated
+@RequiredArgsConstructor
 public class SupportController {
 
     private final SupportService supportService;
-
-    @Autowired
-    public SupportController(SupportService supportService) {
-        this.supportService = supportService;
-    }
 
     @PostMapping("/contact")
     public ResponseEntity<SupportContactResponse> contactSupport(@Valid @RequestBody SupportContactRequest request) {
@@ -47,14 +43,7 @@ public class SupportController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long userId,
             Pageable pageable) {
-
-        boolean hasFilter = (q != null && !q.isBlank()) || labId != null || (status != null && !status.isBlank()) || userId != null;
-        Page<SupportTicketDto> page;
-        if (hasFilter) {
-            page = supportService.searchSupportTickets(q, labId, status, userId, pageable);
-        } else {
-            page = supportService.listSupportTickets(pageable);
-        }
+        Page<SupportTicketDto> page = supportService.searchSupportTickets(q, labId, status, userId, pageable);
         return ResponseEntity.ok(page);
     }
 

@@ -9,8 +9,8 @@ import java.time.OffsetDateTime;
 @Table(name = "support_tickets")
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 @Builder
+@AllArgsConstructor
 public class SupportTicket {
 
     @Id
@@ -23,12 +23,12 @@ public class SupportTicket {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column
     private String email;
 
     private String subject;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT")
     private String message;
 
     private Long labId;
@@ -39,4 +39,16 @@ public class SupportTicket {
 
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
+
+    public SupportTicket(Long id, String ticketId, String name, String email, String subject, Long labId, Long userId, String status, OffsetDateTime createdAt) {
+        this.id = id;
+        this.ticketId = ticketId;
+        this.name = name;
+        this.email = email;
+        this.subject = subject;
+        this.labId = labId;
+        this.userId = userId;
+        this.status = status;
+        this.createdAt = createdAt;
+    }
 }

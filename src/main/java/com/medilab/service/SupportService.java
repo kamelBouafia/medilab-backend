@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 public interface SupportService {
     SupportContactResponse createSupportTicket(SupportContactRequest request);
 
-    Page<SupportTicketDto> listSupportTickets(Pageable pageable);
+//    Page<SupportTicketDto> listSupportTickets(Pageable pageable);
 
     Page<SupportTicketDto> searchSupportTickets(String q, Long labId, String status, Long userId, Pageable pageable);
 
