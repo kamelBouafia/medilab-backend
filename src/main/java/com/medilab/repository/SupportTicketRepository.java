@@ -15,9 +15,11 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, Lo
     @Query("SELECT t FROM SupportTicket t WHERE " +
             "(:labId IS NULL OR t.labId = :labId) AND " +
             "(:status IS NULL OR t.status = :status) AND " +
-            "(:q IS NULL) OR (LOWER(t.ticketId) LIKE LOWER(CONCAT('%',:q,'%')) OR LOWER(t.name) LIKE LOWER(CONCAT('%',:q,'%')) OR LOWER(t.email) LIKE LOWER(CONCAT('%',:q,'%')) OR LOWER(t.subject) LIKE LOWER(CONCAT('%',:q,'%')) OR LOWER(t.message) LIKE LOWER(CONCAT('%',:q,'%')))")
+            "(:userId IS NULL OR t.userId = :userId) AND " +
+            "(:q IS NULL OR (LOWER(t.ticketId) LIKE LOWER(CONCAT('%',:q,'%')) OR LOWER(t.name) LIKE LOWER(CONCAT('%',:q,'%')) OR LOWER(t.email) LIKE LOWER(CONCAT('%',:q,'%')) OR LOWER(t.subject) LIKE LOWER(CONCAT('%',:q,'%')) OR LOWER(t.message) LIKE LOWER(CONCAT('%',:q,'%'))))")
     Page<SupportTicket> search(@Param("q") String q,
                                @Param("labId") Long labId,
                                @Param("status") String status,
+                               @Param("userId") Long userId,
                                Pageable pageable);
 }

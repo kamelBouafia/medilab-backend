@@ -9,7 +9,7 @@ public class SupportContactRequest {
     @NotBlank
     private String name;
 
-    @NotBlank
+//    @NotBlank
     @Email
     private String email;
 
