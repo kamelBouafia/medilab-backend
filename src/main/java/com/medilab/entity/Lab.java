@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "labs")
 @Getter
@@ -22,4 +24,18 @@ public class Lab {
     private Long id;
     private String name;
     private String location;
+
+    // Optional contact email and license number collected at registration
+    @Column(name = "contact_email")
+    private String contactEmail;
+
+    @Column(name = "license_number")
+    private String licenseNumber;
+
+    // 30-day trial window
+    @Column(name = "trial_start")
+    private LocalDateTime trialStart;
+
+    @Column(name = "trial_end")
+    private LocalDateTime trialEnd;
 }

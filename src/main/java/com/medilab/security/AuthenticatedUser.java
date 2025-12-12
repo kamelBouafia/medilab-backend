@@ -17,6 +17,7 @@ public class AuthenticatedUser implements UserDetails {
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
     private final String userType; // "staff" or "patient"
+    private final boolean forcePasswordChange;
 
     @Override
     public boolean isAccountNonExpired() {

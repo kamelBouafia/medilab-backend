@@ -1,0 +1,168 @@
+package com.medilab.service.impl;
+
+import com.medilab.dto.SupportContactRequest;
+import com.medilab.dto.SupportContactResponse;
+import com.medilab.dto.SupportTicketDto;
+import com.medilab.entity.SupportTicket;
+import com.medilab.exception.ResourceNotFoundException;
+import com.medilab.mapper.SupportTicketMapper;
+import com.medilab.repository.SupportTicketRepository;
+import com.medilab.security.AuthenticatedUser;
+import com.medilab.service.SupportService;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class SupportServiceImpl implements SupportService {
+
+    private static final Logger log = LoggerFactory.getLogger(SupportServiceImpl.class);
+
+    private final SupportTicketRepository repository;
+    private final SupportTicketMapper mapper;
+
+    @Override
+    public SupportContactResponse createSupportTicket(SupportContactRequest request) {
+        String ticketId = "TKT-" + UUID.randomUUID();
+        SupportTicket.SupportTicketBuilder ticketBuilder = SupportTicket.builder()
+                .ticketId(ticketId)
+                .subject(request.getSubject())
+                .message(request.getMessage())
+                .status("created")
+                .createdAt(OffsetDateTime.now());
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof AuthenticatedUser authenticatedUser) {
+            ticketBuilder.userId(authenticatedUser.getId())
+                    .labId(authenticatedUser.getLabId())
+                    .name(authenticatedUser.getUsername());
+        } else {
+            ticketBuilder.name(request.getName())
+                    .email(request.getEmail())
+                    .labId(request.getLabId());
+        }
+
+        SupportTicket ticket = ticketBuilder.build();
+        log.info("Creating support ticket {} for labId={} userId={}: {} - {}",
+                ticket.getTicketId(), ticket.getLabId(), ticket.getUserId(), ticket.getSubject(), ticket.getMessage());
+
+        SupportTicket saved = repository.save(ticket);
+
+        return new SupportContactResponse(saved.getTicketId(), saved.getStatus());
+    }
+
+    @Override
+    public Page<SupportTicketDto> searchSupportTickets(String q, Long labId, String status, Long userId, Pageable pageable) {
+        Authentication authentication = getAuthentication();
+
+        String q1 = (q == null || q.isBlank()) ? null : q;
+        String status1 = (status == null || status.isBlank()) ? null : status;
+
+        if (isSysAdmin(authentication)) {
+            return repository.search(q1, labId, status1, userId, pageable).map(mapper::toDto);
+        }
+
+        AuthenticatedUser authenticatedUser = getAuthenticatedUser(authentication);
+
+        if ("patient".equals(authenticatedUser.getUserType())) {
+            return repository.search(q1, authenticatedUser.getLabId(), status1, authenticatedUser.getId(), pageable).map(mapper::toDto);
+        } else {
+            return repository.search(q1, authenticatedUser.getLabId(), status1, null, pageable).map(mapper::toDto);
+        }
+    }
+
+    @Override
+    public SupportTicketDto getTicketById(Long id) {
+        SupportTicket ticket = findTicketById(id);
+        authorizeViewAccess(ticket);
+        return mapper.toDto(ticket);
+    }
+
+    @Override
+    public SupportTicketDto updateTicket(Long id, SupportTicketDto ticketDto) {
+        SupportTicket ticket = findTicketById(id);
+        authorizeModification(ticket);
+
+        ticket.setSubject(ticketDto.getSubject());
+        ticket.setMessage(ticketDto.getMessage());
+        ticket.setStatus(ticketDto.getStatus());
+
+        SupportTicket updatedTicket = repository.save(ticket);
+        return mapper.toDto(updatedTicket);
+    }
+
+    @Override
+    public void deleteTicket(Long id) {
+        SupportTicket ticket = findTicketById(id);
+        authorizeModification(ticket);
+        repository.delete(ticket);
+    }
+
+    private SupportTicket findTicketById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Support ticket not found with id: " + id));
+    }
+
+    private void authorizeViewAccess(SupportTicket ticket) {
+        Authentication authentication = getAuthentication();
+        if (isSysAdmin(authentication)) {
+            return; // System admins can access any ticket
+        }
+
+        AuthenticatedUser authenticatedUser = getAuthenticatedUser(authentication);
+
+        if ("patient".equals(authenticatedUser.getUserType())) {
+            if (!authenticatedUser.getId().equals(ticket.getUserId())) {
+                throw new AccessDeniedException("You are not authorized to perform this action on this ticket.");
+            }
+        } else { // staff
+            if (!authenticatedUser.getLabId().equals(ticket.getLabId())) {
+                throw new AccessDeniedException("You are not authorized to perform this action on this ticket.");
+            }
+        }
+    }
+
+    private void authorizeModification(SupportTicket ticket) {
+        Authentication authentication = getAuthentication();
+        if (isSysAdmin(authentication)) {
+            return; // System admins can modify any ticket
+        }
+
+        AuthenticatedUser authenticatedUser = getAuthenticatedUser(authentication);
+        // For all other users (staff or patient), they must be the owner to modify.
+        if (!authenticatedUser.getId().equals(ticket.getUserId())) {
+            throw new AccessDeniedException("You are not authorized to perform this action on this ticket.");
+        }
+    }
+
+    private Authentication getAuthentication() {
+        return SecurityContextHolder.getContext().getAuthentication();
+    }
+
+    private AuthenticatedUser getAuthenticatedUser(Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof AuthenticatedUser)) {
+            throw new AccessDeniedException("User not authenticated.");
+        }
+        return (AuthenticatedUser) authentication.getPrincipal();
+    }
+
+    private boolean isSysAdmin(Authentication authentication) {
+        if (authentication == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("Admin"::equals);
+    }
+}

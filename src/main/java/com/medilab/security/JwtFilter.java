@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,7 +15,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
@@ -24,7 +27,7 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain chain) throws ServletException, IOException {
         final String authorizationHeader = request.getHeader("Authorization");
 
         String username = null;
@@ -39,16 +42,28 @@ public class JwtFilter extends OncePerRequestFilter {
             Claims claims = jwtUtil.extractAllClaims(jwt);
             Long userId = claims.get("userId", Long.class);
             Long labId = claims.get("labId", Long.class);
-            List<String> authorities = claims.get("authorities", List.class);
+
+            // Read authorities safely
+            Object authObj = claims.get("authorities");
+            List<String> authoritiesList;
+            if (authObj instanceof List) {
+                authoritiesList = ((List<?>) authObj).stream().filter(Objects::nonNull).map(Object::toString).collect(Collectors.toList());
+            } else {
+                authoritiesList = Collections.emptyList();
+            }
+
             String userType = claims.get("type", String.class);
+            Boolean forceFlag = claims.get("forcePasswordChange", Boolean.class);
+            boolean forcePwd = Boolean.TRUE.equals(forceFlag);
 
             AuthenticatedUser authenticatedUser = new AuthenticatedUser(
                     userId,
                     labId,
                     username,
                     null, // Password is not needed in the context
-                    authorities.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()),
-                    userType
+                    authoritiesList.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()),
+                    userType,
+                    forcePwd
             );
 
             if (jwtUtil.validateToken(jwt, authenticatedUser)) {

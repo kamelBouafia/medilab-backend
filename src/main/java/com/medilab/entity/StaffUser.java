@@ -39,6 +39,9 @@ public class StaffUser implements UserDetails {
     @JoinColumn(name = "labId", nullable = false)
     private Lab lab;
 
+    // New flag: when true the user must change their password on first login
+    private boolean forcePasswordChange;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));

@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -34,6 +35,26 @@ public class GlobalExceptionHandler {
             errors.put(fieldName, errorMessage);
         });
         return new ResponseEntity<>(errors, new HttpHeaders(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(TrialExpiredException.class)
+    @ResponseBody
+    public ResponseEntity<Object> handleTrialExpired(TrialExpiredException ex) {
+        logger.info("Trial expired: {}", ex.getMessage());
+        Map<String, String> body = new HashMap<>();
+        body.put("error", "trial_expired");
+        body.put("message", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.PAYMENT_REQUIRED);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseBody
+    public ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex) {
+        logger.warn("Access denied: {}", ex.getMessage());
+        Map<String, String> body = new HashMap<>();
+        body.put("error", "access_denied");
+        body.put("message", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(Exception.class)

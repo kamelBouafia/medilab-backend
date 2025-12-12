@@ -8,7 +8,7 @@ import com.medilab.repository.RequisitionRepository;
 import com.medilab.repository.TestResultRepository;
 import com.medilab.security.AuthenticatedUser;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -16,19 +16,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class PatientDataService {
 
-    @Autowired
-    private RequisitionRepository requisitionRepository;
-
-    @Autowired
-    private TestResultRepository testResultRepository;
-
-    @Autowired
-    private RequisitionMapper requisitionMapper;
-
-    @Autowired
-    private TestResultMapper testResultMapper;
+    private final RequisitionRepository requisitionRepository;
+    private final TestResultRepository testResultRepository;
+    private final RequisitionMapper requisitionMapper;
+    private final TestResultMapper testResultMapper;
 
     @Transactional
     public List<RequisitionDto> getPatientRequisitions() {
