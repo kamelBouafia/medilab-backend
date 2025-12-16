@@ -6,7 +6,11 @@ import com.medilab.entity.SampleStatus;
 import com.medilab.entity.TestResult;
 import com.medilab.exception.ResourceNotFoundException;
 import com.medilab.mapper.TestResultMapper;
-import com.medilab.repository.*;
+import com.medilab.repository.LabRepository;
+import com.medilab.repository.LabTestRepository;
+import com.medilab.repository.RequisitionRepository;
+import com.medilab.repository.StaffUserRepository;
+import com.medilab.repository.TestResultRepository;
 import com.medilab.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,7 +40,8 @@ public class TestResultService {
             return List.of();
         }
 
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication()
+                .getPrincipal();
         Long requisitionId = testResultDtos.get(0).getRequisitionId();
 
         // Fetch existing results for this requisition

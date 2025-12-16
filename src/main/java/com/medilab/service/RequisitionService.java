@@ -5,7 +5,11 @@ import com.medilab.entity.Requisition;
 import com.medilab.entity.SampleStatus;
 import com.medilab.exception.ResourceNotFoundException;
 import com.medilab.mapper.RequisitionMapper;
-import com.medilab.repository.*;
+import com.medilab.repository.LabRepository;
+import com.medilab.repository.LabTestRepository;
+import com.medilab.repository.PatientRepository;
+import com.medilab.repository.RequisitionRepository;
+import com.medilab.repository.StaffUserRepository;
 import com.medilab.security.AuthenticatedUser;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -40,7 +44,7 @@ public class RequisitionService {
 
     @Transactional(readOnly = true)
     public Page<RequisitionDto> getRequisitions(int page, int limit, String q, String sort, String order,
-                                                MultiValueMap<String, String> params) {
+            MultiValueMap<String, String> params) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Sort.Direction direction = Sort.Direction.fromString(order);
         Pageable pageable = PageRequest.of(page > 0 ? page - 1 : 0, limit, Sort.by(direction, sort));

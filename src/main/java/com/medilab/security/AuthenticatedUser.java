@@ -1,6 +1,7 @@
 package com.medilab.security;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -11,7 +12,9 @@ import java.util.Collection;
 @RequiredArgsConstructor
 public class AuthenticatedUser implements UserDetails {
 
+    @NonNull
     private final Long id;
+    @NonNull
     private final Long labId;
     private final String username;
     private final String password;
