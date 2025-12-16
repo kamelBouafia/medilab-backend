@@ -21,14 +21,14 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Requisition {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "patientId", nullable = false)
+    @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 
     @Column(name = "doctorName")
@@ -46,19 +46,15 @@ public class Requisition {
     private LocalDateTime completionDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "createdById", nullable = false)
+    @JoinColumn(name = "created_by_id", nullable = false)
     private StaffUser createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "labId", nullable = false)
+    @JoinColumn(name = "lab_id", nullable = false)
     private Lab lab;
 
     @ManyToMany
-    @JoinTable(
-            name = "requisition_tests",
-            joinColumns = @JoinColumn(name = "requisitionId"),
-            inverseJoinColumns = @JoinColumn(name = "testId")
-    )
+    @JoinTable(name = "requisition_tests", joinColumns = @JoinColumn(name = "requisition_id"), inverseJoinColumns = @JoinColumn(name = "test_id"))
     private Set<LabTest> tests;
 
     @OneToMany(mappedBy = "requisition")

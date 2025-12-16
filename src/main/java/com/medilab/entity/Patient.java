@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Patient {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,11 +41,11 @@ public class Patient {
     private String allergies;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "createdById", nullable = false)
+    @JoinColumn(name = "created_by_id", nullable = false)
     private StaffUser createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "labId", nullable = false)
+    @JoinColumn(name = "lab_id", nullable = false)
     private Lab lab;
 
     public enum Gender {

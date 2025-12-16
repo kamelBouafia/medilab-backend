@@ -15,7 +15,7 @@ import lombok.Builder;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class InventoryItem {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,10 +30,10 @@ public class InventoryItem {
     private String supplier;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "addedById", nullable = false)
+    @JoinColumn(name = "added_by_id", nullable = false)
     private StaffUser addedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "labId", nullable = false)
+    @JoinColumn(name = "lab_id", nullable = false)
     private Lab lab;
 }

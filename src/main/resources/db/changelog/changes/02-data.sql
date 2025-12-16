@@ -1,0 +1,272 @@
+-- liquibase formatted sql
+
+-- changeset medilab:02-data
+-- Defensive schema updates (idempotent where supported)
+-- (Skipping ALTER statements as they are DDL and should be in schema, but for data script we will just run inserts. Actually, original data.sql had ALTERS. I should check if they were in schema.sql. They were adding columns to labs. Schema.sql has these columns: contact_email, license_number, trial_start, trial_end. So I don't need the ALTERs here if schema.sql is fresh. I will comment them out or remove them to be safe/clean.)
+
+-- LABS
+INSERT INTO labs (name, contact_email, license_number, trial_start, trial_end) VALUES ('Main Lab', 'main@lab.local', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + INTERVAL '30' DAY);
+INSERT INTO labs (name, contact_email, license_number, trial_start, trial_end) VALUES ('Branch Lab', 'branch@lab.local', NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP - INTERVAL '30' DAY);
+
+-- STAFF_USERS
+INSERT INTO staff_users (id, name, username, password, role, lab_id, force_password_change) VALUES
+(1, 'Alice', 'alice', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1, true),
+(2, 'Manager', 'manager', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Manager', 1, false),
+(3, 'Technician', 'technician', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1, false),
+(4, 'Bob', 'bob', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 2, true),
+(5, 'BranchManager', 'branchmanager', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Manager', 2, false),
+(6, 'SysAdmin', 'sysadmin', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Admin', 1, false);
+
+-- PATIENTS (52 total)
+INSERT INTO patients (id, name, username, dob, gender, contact, created_by_id, lab_id) VALUES
+(1, 'John Doe', 'john.doe', '1990-01-01', 'Male', 'john@example.com', 1, 1),
+(2, 'Jane Smith', 'jane.smith', '1985-05-15', 'Female', 'jane@example.com', 4, 2),
+(3, 'Liam Johnson', 'liam.johnson', '1992-03-10', 'Male', 'liam.j@email.com', 1, 1),
+(4, 'Olivia Williams', 'olivia.williams', '1988-07-22', 'Female', 'olivia.w@email.com', 1, 1),
+(5, 'Noah Brown', 'noah.brown', '2001-11-05', 'Male', 'noah.b@email.com', 1, 1),
+(6, 'Emma Jones', 'emma.jones', '1995-09-14', 'Female', 'emma.j@email.com', 1, 1),
+(7, 'Oliver Garcia', 'oliver.garcia', '1976-02-28', 'Male', 'oliver.g@email.com', 1, 1),
+(8, 'Ava Miller', 'ava.miller', '2005-06-30', 'Female', 'ava.m@email.com', 1, 1),
+(9, 'Elijah Davis', 'elijah.davis', '1999-12-01', 'Male', 'elijah.d@email.com', 1, 1),
+(10, 'Charlotte Rodriguez', 'charlotte.rodriguez', '1983-04-19', 'Female', 'charlotte.r@email.com', 1, 1),
+(11, 'James Wilson', 'james.wilson', '1990-08-08', 'Male', 'james.w@email.com', 1, 1),
+(12, 'Sophia Martinez', 'sophia.martinez', '1998-01-25', 'Female', 'sophia.m@email.com', 1, 1),
+(13, 'William Anderson', 'william.anderson', '1979-03-12', 'Male', 'william.a@email.com', 1, 1),
+(14, 'Isabella Taylor', 'isabella.taylor', '2003-10-09', 'Female', 'isabella.t@email.com', 1, 1),
+(15, 'Henry Thomas', 'henry.thomas', '1994-05-21', 'Male', 'henry.t@email.com', 1, 1),
+(16, 'Mia Hernandez', 'mia.hernandez', '1986-11-27', 'Female', 'mia.h@email.com', 1, 1),
+(17, 'Lucas Moore', 'lucas.moore', '1991-07-07', 'Male', 'lucas.m@email.com', 1, 1),
+(18, 'Amelia Martin', 'amelia.martin', '1997-04-02', 'Female', 'amelia.m@email.com', 1, 1),
+(19, 'Benjamin Jackson', 'benjamin.jackson', '1980-09-03', 'Male', 'benjamin.j@email.com', 1, 1),
+(20, 'Harper White', 'harper.white', '2000-02-18', 'Female', 'harper.w@email.com', 1, 1),
+(21, 'Alexander Harris', 'alexander.harris', '1993-06-11', 'Male', 'alexander.h@email.com', 1, 1),
+(22, 'Evelyn Clark', 'evelyn.clark', '1987-12-24', 'Female', 'evelyn.c@email.com', 1, 1),
+(23, 'Michael Lewis', 'michael.lewis', '1996-08-16', 'Male', 'michael.l@email.com', 1, 1),
+(24, 'Abigail Robinson', 'abigail.robinson', '1984-01-31', 'Female', 'abigail.r@email.com', 1, 1),
+(25, 'Daniel Walker', 'daniel.walker', '1990-10-03', 'Male', 'daniel.w@email.com', 1, 1),
+(26, 'Emily Young', 'emily.young', '2002-05-05', 'Female', 'emily.y@email.com', 1, 1),
+(27, 'Matthew Allen', 'matthew.allen', '1982-07-14', 'Male', 'matthew.a@email.com', 1, 1),
+(28, 'Elizabeth King', 'elizabeth.king', '1994-09-23', 'Female', 'elizabeth.k@email.com', 1, 1),
+(29, 'Joseph Wright', 'joseph.wright', '1978-02-09', 'Male', 'joseph.w@email.com', 1, 1),
+(30, 'Sofia Scott', 'sofia.scott', '2004-11-11', 'Female', 'sofia.s@email.com', 1, 1),
+(31, 'David Green', 'david.green', '1991-04-15', 'Male', 'david.g@email.com', 1, 1),
+(32, 'Avery Adams', 'avery.adams', '1989-08-18', 'Female', 'avery.a@email.com', 1, 1),
+(33, 'Samuel Baker', 'samuel.baker', '1998-03-20', 'Male', 'samuel.b@email.com', 1, 1),
+(34, 'Grace Nelson', 'grace.nelson', '1992-01-07', 'Female', 'grace.n@email.com', 1, 1),
+(35, 'Christopher Carter', 'christopher.carter', '1981-06-01', 'Male', 'christopher.c@email.com', 1, 1),
+(36, 'Chloe Mitchell', 'chloe.mitchell', '2001-09-08', 'Female', 'chloe.m@email.com', 1, 1),
+(37, 'Andrew Perez', 'andrew.perez', '1995-02-25', 'Male', 'andrew.p@email.com', 1, 1),
+(38, 'Victoria Roberts', 'victoria.roberts', '1987-05-13', 'Female', 'victoria.r@email.com', 1, 1),
+(39, 'Joshua Turner', 'joshua.turner', '1993-11-19', 'Male', 'joshua.t@email.com', 1, 1),
+(40, 'Madison Phillips', 'madison.phillips', '1999-07-29', 'Female', 'madison.p@email.com', 1, 1),
+(41, 'Anthony Campbell', 'anthony.campbell', '1985-04-04', 'Male', 'anthony.c@email.com', 1, 1),
+(42, 'Lily Parker', 'lily.parker', '2000-12-12', 'Female', 'lily.p@email.com', 1, 1),
+(43, 'Ryan Evans', 'ryan.evans', '1997-08-26', 'Male', 'ryan.e@email.com', 1, 1),
+(44, 'Hannah Edwards', 'hannah.edwards', '1990-02-14', 'Female', 'hannah.e@email.com', 1, 1),
+(45, 'Nicholas Collins', 'nicholas.collins', '1983-10-30', 'Male', 'nicholas.c@email.com', 1, 1),
+(46, 'Addison Stewart', 'addison.stewart', '2003-03-03', 'Female', 'addison.s@email.com', 1, 1),
+(47, 'Tyler Morris', 'tyler.morris', '1996-09-05', 'Male', 'tyler.m@email.com', 1, 1),
+(48, 'Natalie Rogers', 'natalie.rogers', '1988-06-20', 'Female', 'natalie.r@email.com', 1, 1),
+(49, 'Brandon Reed', 'brandon.reed', '1994-01-17', 'Male', 'brandon.r@email.com', 1, 1),
+(50, 'Zoe Cook', 'zoe.cook', '2002-08-01', 'Female', 'zoe.c@email.com', 1, 1),
+(51, 'Justin Morgan', 'justin.morgan', '1986-04-22', 'Male', 'justin.m@email.com', 1, 1),
+(52, 'Leah Bell', 'leah.bell', '1999-10-18', 'Female', 'leah.b@email.com', 1, 1);
+
+-- LAB_TESTS
+INSERT INTO lab_tests (id, name, category, price, lab_id) VALUES
+(1, 'Complete Blood Count (CBC)', 'Hematology', 25.00, 1),
+(2, 'Blood Glucose', 'Chemistry', 35.00, 1),
+(3, 'Urinalysis', 'Urinalysis', 20.00, 1),
+(4, 'Lipid Panel', 'Chemistry', 40.00, 1),
+(5, 'TSH', 'Endocrinology', 50.00, 1),
+(6, 'Hepatitis B Panel', 'Virology', 75.00, 2),
+(7, 'Basic Metabolic Panel (BMP)', 'Chemistry', 45.00, 1),
+(8, 'Comprehensive Metabolic Panel (CMP)', 'Chemistry', 60.00, 1),
+(9, 'Prothrombin Time (PT)', 'Hematology', 30.00, 1),
+(10, 'Activated Partial Thromboplastin Time (aPTT)', 'Hematology', 32.00, 1),
+(11, 'Hemoglobin A1c (HbA1c)', 'Endocrinology', 48.00, 1),
+(12, 'Liver Function Tests (LFTs)', 'Chemistry', 55.00, 1),
+(13, 'Kidney Function Tests', 'Chemistry', 52.00, 1),
+(14, 'C-Reactive Protein (CRP)', 'Immunology', 42.00, 1),
+(15, 'Erythrocyte Sedimentation Rate (ESR)', 'Hematology', 28.00, 1),
+(16, 'Thyroid Panel (T3, T4, TSH)', 'Endocrinology', 85.00, 1),
+(17, 'Vitamin D, 25-Hydroxy', 'Chemistry', 65.00, 1),
+(18, 'Iron and Total Iron Binding Capacity (TIBC)', 'Hematology', 58.00, 1),
+(19, 'Urine Culture', 'Microbiology', 40.00, 1),
+(20, 'Blood Culture', 'Microbiology', 70.00, 1),
+(21, 'Stool Analysis', 'Microbiology', 35.00, 1),
+(22, 'Pap Smear', 'Cytology', 90.00, 1),
+(23, 'PSA (Prostate-Specific Antigen)', 'Immunology', 75.00, 1),
+(24, 'Cholesterol Test', 'Chemistry', 22.00, 1),
+(25, 'Triglycerides Test', 'Chemistry', 23.00, 1),
+(26, 'HIV Test', 'Virology', 80.00, 1),
+(27, 'New Test 1', 'Category 1', 10.00, 1),
+(28, 'New Test 2', 'Category 2', 12.50, 1),
+(29, 'New Test 3', 'Category 1', 15.00, 1),
+(30, 'New Test 4', 'Category 3', 20.00, 1),
+(31, 'New Test 5', 'Category 2', 22.00, 1),
+(32, 'New Test 6', 'Category 1', 18.50, 1),
+(33, 'New Test 7', 'Category 3', 30.00, 1),
+(34, 'New Test 8', 'Category 2', 25.00, 1),
+(35, 'New Test 9', 'Category 1', 12.00, 1),
+(36, 'New Test 10', 'Category 3', 35.00, 1),
+(37, 'New Test 11', 'Category 1', 10.00, 1),
+(38, 'New Test 12', 'Category 2', 12.50, 1),
+(39, 'New Test 13', 'Category 1', 15.00, 1),
+(40, 'New Test 14', 'Category 3', 20.00, 1),
+(41, 'New Test 15', 'Category 2', 22.00, 1),
+(42, 'New Test 16', 'Category 1', 18.50, 1),
+(43, 'New Test 17', 'Category 3', 30.00, 1),
+(44, 'New Test 18', 'Category 2', 25.00, 1),
+(45, 'New Test 19', 'Category 1', 12.00, 1),
+(46, 'New Test 20', 'Category 3', 35.00, 1);
+
+-- INVENTORY
+INSERT INTO inventory (id, name, category, quantity, low_stock_threshold, supplier, added_by_id, lab_id) VALUES
+(1, 'Test Tubes', 'Consumables', 100, 10, 'LabSupplier', 1, 1),
+(2, 'Microscope Slides', 'Consumables', 200, 20, 'BioSupply', 4, 2);
+
+-- REQUISITIONS (23 total)
+INSERT INTO requisitions (id, patient_id, doctor_name, date, status, created_by_id, lab_id, completion_date) VALUES
+(1, 1, 'Dr. Smith', '2023-10-01T10:00:00Z', 'COMPLETED', 1, 1, '2023-10-01T18:00:00Z'),
+(2, 2, 'Dr. Jones', '2023-10-02T11:30:00Z', 'COLLECTED', 4, 2, NULL),
+(3, 3, 'Dr. Evelyn Reed', '2023-10-03T09:00:00Z', 'PROCESSING', 3, 1, NULL),
+(4, 4, 'Dr. Samuel Cho', '2023-10-04T14:00:00Z', 'CANCELLED', 1, 1, NULL),
+(5, 5, 'Dr. Olivia Blue', '2023-10-05T16:20:00Z', 'COMPLETED', 3, 1, '2023-10-06T10:00:00Z'),
+(6, 6, 'Dr. Evelyn Reed', '2023-10-06T08:00:00Z', 'IN_TRANSIT', 1, 1, NULL),
+(7, 7, 'Dr. Samuel Cho', '2023-10-07T13:15:00Z', 'PROCESSING', 1, 1, NULL),
+(8, 8, 'Dr. Olivia Blue', '2023-10-08T15:00:00Z', 'COMPLETED', 3, 1, '2023-10-09T11:00:00Z'),
+(9, 9, 'Dr. Evelyn Reed', '2023-10-09T10:30:00Z', 'COLLECTED', 1, 1, NULL),
+(10, 10, 'Dr. Samuel Cho', '2023-10-10T12:00:00Z', 'PROCESSING', 3, 1, NULL),
+(11, 11, 'Dr. Olivia Blue', '2023-10-11T11:00:00Z', 'COMPLETED', 1, 1, '2023-10-11T19:00:00Z'),
+(12, 12, 'Dr. Evelyn Reed', '2023-10-12T09:45:00Z', 'IN_TRANSIT', 1, 1, NULL),
+(13, 13, 'Dr. Samuel Cho', '2023-10-13T16:00:00Z', 'PROCESSING', 3, 1, NULL),
+(14, 14, 'Dr. Olivia Blue', '2023-10-14T14:30:00Z', 'CANCELLED', 1, 1, NULL),
+(15, 15, 'Dr. Evelyn Reed', '2023-10-15T10:10:00Z', 'COMPLETED', 3, 1, '2023-10-16T09:00:00Z'),
+(16, 16, 'Dr. Samuel Cho', '2023-10-16T11:00:00Z', 'COLLECTED', 1, 1, NULL),
+(17, 17, 'Dr. Olivia Blue', '2023-10-17T09:00:00Z', 'PROCESSING', 1, 1, NULL),
+(18, 18, 'Dr. Evelyn Reed', '2023-10-18T13:30:00Z', 'COMPLETED', 3, 1, '2023-10-19T12:00:00Z'),
+(19, 19, 'Dr. Samuel Cho', '2023-10-19T15:00:00Z', 'IN_TRANSIT', 1, 1, NULL),
+(20, 20, 'Dr. Olivia Blue', '2023-10-20T10:00:00Z', 'PROCESSING', 3, 1, NULL),
+(21, 21, 'Dr. Evelyn Reed', '2023-10-21T11:00:00Z', 'COLLECTED', 1, 1, NULL),
+(22, 22, 'Dr. Samuel Cho', '2023-10-22T09:30:00Z', 'PROCESSING', 1, 1, NULL),
+(23, 1, 'Dr. Smith', '2023-10-23T10:00:00Z', 'COMPLETED', 1, 1, '2023-10-23T18:00:00Z');
+
+-- REQUISITION_TESTS
+INSERT INTO requisition_tests (requisition_id, test_id) VALUES
+(1, 1), (1, 2),
+(2, 6),
+(3, 1), (3, 3),
+(5, 1), (5, 2),
+(6, 4),
+(7, 1), (7, 5),
+(8, 2),
+(9, 1),
+(10, 3), (10, 4),
+(11, 1), (11, 2), (11, 5),
+(12, 4),
+(13, 1),
+(15, 5),
+(16, 1),
+(17, 2), (17, 4),
+(18, 1), (18, 3), (18, 5),
+(19, 2),
+(20, 1),
+(21, 4),
+(22, 1), (22, 2),
+(23, 27), (23, 28), (23, 29), (23, 30), (23, 31), (23, 32), (23, 33), (23, 34), (23, 35), (23, 36),
+(23, 37), (23, 38), (23, 39), (23, 40), (23, 41), (23, 42), (23, 43), (23, 44), (23, 45), (23, 46);
+
+-- TEST_RESULTS
+INSERT INTO test_results (requisition_id, test_id, result_value, interpretation, entered_by_id, lab_id) VALUES
+(1, 1, '14.5', 'Normal', 1, 1),
+(1, 2, '95', 'Normal', 1, 1),
+(5, 1, '12.5', 'Normal', 3, 1),
+(5, 2, '105', 'High', 3, 1),
+(8, 2, '85', 'Normal', 3, 1),
+(11, 1, '15.0', 'Normal', 1, 1),
+(11, 2, '100', 'Normal', 1, 1),
+(11, 5, '2.5', 'Normal', 1, 1),
+(15, 5, '3.0', 'Normal', 3, 1),
+(18, 1, '13.5', 'Normal', 3, 1),
+(18, 3, 'Negative', 'Normal', 3, 1),
+(18, 5, '2.0', 'Normal', 3, 1),
+(23, 27, 'Result 1', 'Interpretation 1', 1, 1),
+(23, 28, 'Result 2', 'Interpretation 2', 1, 1),
+(23, 29, 'Result 3', 'Interpretation 3', 1, 1),
+(23, 30, 'Result 4', 'Interpretation 4', 1, 1),
+(23, 31, 'Result 5', 'Interpretation 5', 1, 1),
+(23, 32, 'Result 6', 'Interpretation 6', 1, 1),
+(23, 33, 'Result 7', 'Interpretation 7', 1, 1),
+(23, 34, 'Result 8', 'Interpretation 8', 1, 1),
+(23, 35, 'Result 9', 'Interpretation 9', 1, 1),
+(23, 36, 'Result 10', 'Interpretation 10', 1, 1),
+(23, 37, 'Result 11', 'Interpretation 11', 1, 1),
+(23, 38, 'Result 12', 'Interpretation 12', 1, 1),
+(23, 39, 'Result 13', 'Interpretation 13', 1, 1),
+(23, 40, 'Result 14', 'Interpretation 14', 1, 1),
+(23, 41, 'Result 15', 'Interpretation 15', 1, 1),
+(23, 42, 'Result 16', 'Interpretation 16', 1, 1),
+(23, 43, 'Result 17', 'Interpretation 17', 1, 1),
+(23, 44, 'Result 18', 'Interpretation 18', 1, 1),
+(23, 45, 'Result 19', 'Interpretation 19', 1, 1),
+(23, 46, 'Result 20', 'Interpretation 20', 1, 1);
+
+-- AUDIT LOG (20 examples)
+INSERT INTO audit_log (timestamp, user_id, action, details, lab_id) VALUES
+(CURRENT_TIMESTAMP - INTERVAL '10' DAY, 2, 'USER_LOGIN_SUCCESS', 'User ''manager'' logged in successfully.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '9' DAY, 1, 'PATIENT_CREATED', 'Patient ''Liam Johnson'' (ID: 3) was created.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '9' DAY, 1, 'PATIENT_CREATED', 'Patient ''Olivia Williams'' (ID: 4) was created.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '8' DAY, 2, 'INVENTORY_CREATED', 'Inventory item ''Syringes'' (ID: 3) was created.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '8' DAY, 3, 'REQUISITION_CREATED', 'Requisition for patient ''Noah Brown'' (ID: 5) was created.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '7' DAY, 1, 'REQUISITION_STATUS_CHANGED', 'Requisition (ID: 1) status changed to COMPLETED.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '7' DAY, 4, 'USER_LOGIN_SUCCESS', 'User ''bob'' logged in successfully.', 2),
+(CURRENT_TIMESTAMP - INTERVAL '6' DAY, 5, 'USER_LOGIN_FAILURE', 'Failed login attempt for user ''admin''.', 2),
+(CURRENT_TIMESTAMP - INTERVAL '6' DAY, 2, 'LAB_TEST_CREATED', 'Lab Test ''TSH'' (ID: 5) was created.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '5' DAY, 3, 'PATIENT_UPDATED', 'Patient ''John Doe'' (ID: 1) was updated.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '5' DAY, 1, 'INVENTORY_UPDATED', 'Inventory item ''Test Tubes'' (ID: 1) quantity updated to 80.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '4' DAY, 2, 'REQUISITION_STATUS_CHANGED', 'Requisition (ID: 4) status changed to CANCELLED.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '4' DAY, 1, 'PATIENT_DELETED', 'Patient ''Zoe Cook'' (ID: 50) was deleted.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '3' DAY, 3, 'REQUISITION_CREATED', 'Requisition for patient ''Emma Jones'' (ID: 6) was created.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '3' DAY, 4, 'INVENTORY_UPDATED', 'Inventory item ''Microscope Slides'' (ID: 2) quantity updated to 150.', 2),
+(CURRENT_TIMESTAMP - INTERVAL '2' DAY, 2, 'USER_ROLE_CHANGED', 'User ''alice'' (ID: 1) role changed to Manager.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '2' DAY, 1, 'REQUISITION_STATUS_CHANGED', 'Requisition (ID: 5) status changed to COMPLETED.', 1),
+(CURRENT_TIMESTAMP - INTERVAL '1' DAY, 5, 'USER_LOGIN_SUCCESS', 'User ''branchmanager'' logged in successfully.', 2),
+(CURRENT_TIMESTAMP - INTERVAL '1' DAY, 3, 'PATIENT_CREATED', 'Patient ''New Patient'' (ID: 53) was created.', 1),
+(CURRENT_TIMESTAMP, 1, 'USER_LOGOUT', 'User ''alice'' logged out.', 1);
+
+INSERT INTO support_tickets (ticket_id, name, email, subject, message, lab_id, user_id, status) VALUES
+('TICKET001', 'John Doe', 'john.doe@example.com', 'Login Issue', 'I cannot log in to my account.', 1, 1, 'OPEN'),
+('TICKET002', 'Jane Smith', 'jane.smith@example.com', 'Billing Inquiry', 'I have a question about my recent invoice.', 1, 2, 'OPEN'),
+('TICKET003', 'Peter Jones', 'peter.jones@example.com', 'Feature Request', 'It would be great to have a dark mode.', 2, 3, 'OPEN'),
+('TICKET004', 'Mary Johnson', 'mary.johnson@example.com', 'Bug Report', 'The dashboard is not loading correctly.', 2, 4, 'OPEN'),
+('TICKET005', 'David Williams', 'david.williams@example.com', 'General Question', 'How do I reset my password?', 3, 5, 'OPEN'),
+('TICKET006', 'Susan Brown', 'susan.brown@example.com', 'Login Issue', 'I am locked out of my account.', 3, 6, 'OPEN'),
+('TICKET007', 'Michael Davis', 'michael.davis@example.com', 'Billing Inquiry', 'There is an error on my bill.', 4, 7, 'OPEN'),
+('TICKET008', 'Karen Miller', 'karen.miller@example.com', 'Feature Request', 'Can you add support for exporting to PDF?', 4, 8, 'OPEN'),
+('TICKET009', 'James Wilson', 'james.wilson@example.com', 'Bug Report', 'The mobile app is crashing.', 5, 9, 'OPEN'),
+('TICKET010', 'Patricia Moore', 'patricia.moore@example.com', 'General Question', 'What are your hours of operation?', 5, 10, 'OPEN'),
+('TICKET011', 'Robert Taylor', 'robert.taylor@example.com', 'Login Issue', 'My username is not recognized.', 6, 11, 'OPEN'),
+('TICKET012', 'Jennifer Anderson', 'jennifer.anderson@example.com', 'Billing Inquiry', 'I was double-charged for my subscription.', 6, 12, 'OPEN'),
+('TICKET013', 'Charles Thomas', 'charles.thomas@example.com', 'Feature Request', 'Please add two-factor authentication.', 7, 13, 'OPEN'),
+('TICKET014', 'Linda Jackson', 'linda.jackson@example.com', 'Bug Report', 'I am unable to upload files.', 7, 14, 'OPEN'),
+('TICKET015', 'Thomas White', 'thomas.white@example.com', 'General Question', 'Do you offer a student discount?', 8, 15, 'OPEN'),
+('TICKET016', 'Barbara Harris', 'barbara.harris@example.com', 'Login Issue', 'I forgot my security question answers.', 8, 16, 'OPEN'),
+('TICKET017', 'Daniel Martin', 'daniel.martin@example.com', 'Billing Inquiry', 'My payment method was declined.', 9, 17, 'OPEN'),
+('TICKET018', 'Elizabeth Thompson', 'elizabeth.thompson@example.com', 'Feature Request', 'It would be helpful to have a search bar.', 9, 18, 'OPEN'),
+('TICKET019', 'Matthew Garcia', 'matthew.garcia@example.com', 'Bug Report', 'The website is not responsive on my tablet.', 10, 19, 'OPEN'),
+('TICKET020', 'Jessica Martinez', 'jessica.martinez@example.com', 'General Question', 'How can I update my contact information?', 10, 20, 'OPEN'),
+('TICKET021', 'Christopher Robinson', 'christopher.robinson@example.com', 'Login Issue', 'I am not receiving the password reset email.', 1, 21, 'OPEN'),
+('TICKET022', 'Ashley Clark', 'ashley.clark@example.com', 'Billing Inquiry', 'Can I get a refund?', 2, 22, 'OPEN'),
+('TICKET023', 'Joshua Rodriguez', 'joshua.rodriguez@example.com', 'Feature Request', 'Please add more notification options.', 3, 23, 'OPEN'),
+('TICKET024', 'Amanda Lewis', 'amanda.lewis@example.com', 'Bug Report', 'The new update broke the reporting feature.', 4, 24, 'OPEN'),
+('TICKET025', 'Brian Lee', 'brian.lee@example.com', 'General Question', 'What is the best way to contact support?', 5, 25, 'OPEN');
+
+-- Reset sequences to avoid primary key conflicts
+ALTER TABLE patients ALTER COLUMN id RESTART WITH 53;
+ALTER TABLE requisitions ALTER COLUMN id RESTART WITH 24;
+ALTER TABLE lab_tests ALTER COLUMN id RESTART WITH 47;
+ALTER TABLE inventory ALTER COLUMN id RESTART WITH 3;
+ALTER TABLE staff_users ALTER COLUMN id RESTART WITH 7;
+ALTER TABLE test_results ALTER COLUMN id RESTART WITH 33;
+ALTER TABLE support_tickets ALTER COLUMN id RESTART WITH 26;

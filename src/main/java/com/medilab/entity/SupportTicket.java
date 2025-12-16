@@ -31,8 +31,10 @@ public class SupportTicket {
     @Column(columnDefinition = "TEXT")
     private String message;
 
+    @Column(name = "lab_id")
     private Long labId;
 
+    @Column(name = "user_id")
     private Long userId;
 
     private String status;
@@ -40,7 +42,8 @@ public class SupportTicket {
     @Column(name = "created_at")
     private OffsetDateTime createdAt;
 
-    public SupportTicket(Long id, String ticketId, String name, String email, String subject, Long labId, Long userId, String status, OffsetDateTime createdAt) {
+    public SupportTicket(Long id, String ticketId, String name, String email, String subject, Long labId, Long userId,
+            String status, OffsetDateTime createdAt) {
         this.id = id;
         this.ticketId = ticketId;
         this.name = name;

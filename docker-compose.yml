@@ -1,10 +1,35 @@
 services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: medilab-postgres
+    environment:
+      POSTGRES_DB: medilab_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - medilab-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build: .
     ports:
       - "8080:8080"
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY:-placeholder}
+      - DB_URL=jdbc:postgresql://postgres:5432/medilab_db
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - medilab-network
 
@@ -20,3 +45,6 @@ services:
 networks:
   medilab-network:
     driver: bridge
+
+volumes:
+  postgres-data:

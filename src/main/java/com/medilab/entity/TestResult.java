@@ -10,38 +10,38 @@ import lombok.Builder;
 
 @Entity
 @Table(name = "test_results", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"requisitionId", "testId"})
+        @UniqueConstraint(columnNames = { "requisitionId", "testId" })
 })
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class TestResult {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "requisitionId", nullable = false)
+    @JoinColumn(name = "requisition_id", nullable = false)
     private Requisition requisition;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "testId", nullable = false)
+    @JoinColumn(name = "test_id", nullable = false)
     private LabTest test;
 
     @Column(name = "resultValue", nullable = false)
     private String resultValue;
 
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String interpretation;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "enteredById", nullable = false)
+    @JoinColumn(name = "entered_by_id", nullable = false)
     private StaffUser enteredBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "labId", nullable = false)
+    @JoinColumn(name = "lab_id", nullable = false)
     private Lab lab;
 }

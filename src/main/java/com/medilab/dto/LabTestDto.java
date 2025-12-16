@@ -9,6 +9,6 @@ public class LabTestDto {
     private Long id;
     private String name;
     private String category;
-    private double price;
+    private java.math.BigDecimal price;
     private String result;
 }
