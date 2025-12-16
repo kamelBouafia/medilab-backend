@@ -6,7 +6,7 @@ import com.medilab.repository.InventoryRepository;
 import com.medilab.repository.RequisitionRepository;
 import com.medilab.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.medilab.security.SecurityUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -21,17 +21,17 @@ public class DashboardService {
     private final InventoryRepository inventoryRepository;
 
     public DashboardStatsDto getDashboardStats() {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Long labId = user.getLabId();
 
-        long pendingTests = requisitionRepository.countByLabIdAndStatusIn(labId, Arrays.asList(SampleStatus.COLLECTED, SampleStatus.IN_TRANSIT, SampleStatus.PROCESSING));
+        long pendingTests = requisitionRepository.countByLabIdAndStatusIn(labId,
+                Arrays.asList(SampleStatus.COLLECTED, SampleStatus.IN_TRANSIT, SampleStatus.PROCESSING));
 
         long completedToday = requisitionRepository.countByLabIdAndStatusAndCompletionDateBetween(
                 labId,
                 SampleStatus.COMPLETED,
                 LocalDate.now().atStartOfDay(),
-                LocalDate.now().atTime(LocalTime.MAX)
-        );
+                LocalDate.now().atTime(LocalTime.MAX));
 
         long lowStockItems = inventoryRepository.countByLabIdAndQuantityLessThanLowStockThreshold(labId);
 

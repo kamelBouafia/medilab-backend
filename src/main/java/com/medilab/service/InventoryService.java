@@ -14,7 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.medilab.security.SecurityUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -29,11 +29,12 @@ public class InventoryService {
     private final AuditLogService auditLogService;
 
     public Page<InventoryItemDto> getInventory(int page, int limit, String q, String sort, String order) {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Sort.Direction direction = Sort.Direction.fromString(order);
         Pageable pageable = PageRequest.of(page > 0 ? page - 1 : 0, limit, Sort.by(direction, sort));
 
-        Specification<InventoryItem> spec = Specification.where((root, query, cb) -> cb.equal(root.get("lab").get("id"), user.getLabId()));
+        Specification<InventoryItem> spec = Specification
+                .where((root, query, cb) -> cb.equal(root.get("lab").get("id"), user.getLabId()));
 
         if (StringUtils.hasText(q)) {
             spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + q.toLowerCase() + "%"));
@@ -43,19 +44,20 @@ public class InventoryService {
     }
 
     public InventoryItemDto createInventoryItem(InventoryItemDto inventoryItemDto) {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         InventoryItem inventoryItem = inventoryItemMapper.toEntity(inventoryItemDto);
 
         labRepository.findById(user.getLabId()).ifPresent(inventoryItem::setLab);
         staffUserRepository.findById(user.getId()).ifPresent(inventoryItem::setAddedBy);
 
         InventoryItem savedInventoryItem = inventoryRepository.save(inventoryItem);
-        auditLogService.logAction("INVENTORY_CREATED", "Inventory item '" + savedInventoryItem.getName() + "' (ID: " + savedInventoryItem.getId() + ") was created.");
+        auditLogService.logAction("INVENTORY_CREATED", "Inventory item '" + savedInventoryItem.getName() + "' (ID: "
+                + savedInventoryItem.getId() + ") was created.");
         return inventoryItemMapper.toDto(savedInventoryItem);
     }
 
     public InventoryItemDto updateInventoryItem(Long id, InventoryItemDto inventoryItemDto) {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         InventoryItem existingInventoryItem = inventoryRepository.findByIdAndLabId(id, user.getLabId())
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory item not found"));
 
@@ -66,16 +68,18 @@ public class InventoryService {
         existingInventoryItem.setSupplier(inventoryItemDto.getSupplier());
 
         InventoryItem updatedInventoryItem = inventoryRepository.save(existingInventoryItem);
-        auditLogService.logAction("INVENTORY_UPDATED", "Inventory item '" + updatedInventoryItem.getName() + "' (ID: " + updatedInventoryItem.getId() + ") was updated.");
+        auditLogService.logAction("INVENTORY_UPDATED", "Inventory item '" + updatedInventoryItem.getName() + "' (ID: "
+                + updatedInventoryItem.getId() + ") was updated.");
         return inventoryItemMapper.toDto(updatedInventoryItem);
     }
 
     public void deleteInventoryItem(Long id) {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         InventoryItem existingInventoryItem = inventoryRepository.findByIdAndLabId(id, user.getLabId())
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory item not found"));
 
         inventoryRepository.deleteById(id);
-        auditLogService.logAction("INVENTORY_DELETED", "Inventory item '" + existingInventoryItem.getName() + "' (ID: " + existingInventoryItem.getId() + ") was deleted.");
+        auditLogService.logAction("INVENTORY_DELETED", "Inventory item '" + existingInventoryItem.getName() + "' (ID: "
+                + existingInventoryItem.getId() + ") was deleted.");
     }
 }

@@ -10,12 +10,12 @@ import com.medilab.security.AuthenticatedUser;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import com.medilab.security.SecurityUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,25 +39,31 @@ public class RequisitionService {
     private final RequisitionMapper requisitionMapper;
 
     @Transactional(readOnly = true)
-    public Page<RequisitionDto> getRequisitions(int page, int limit, String q, String sort, String order, MultiValueMap<String, String> params) {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public Page<RequisitionDto> getRequisitions(int page, int limit, String q, String sort, String order,
+                                                MultiValueMap<String, String> params) {
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Sort.Direction direction = Sort.Direction.fromString(order);
         Pageable pageable = PageRequest.of(page > 0 ? page - 1 : 0, limit, Sort.by(direction, sort));
 
         if (params.containsKey("patientId")) {
             List<Long> patientIds = params.get("patientId").stream().map(Long::valueOf).toList();
             if (patientIds.size() == 1) {
-                return requisitionRepository.findByPatientIdAndLabIdWithTestsAndResults(patientIds.get(0), user.getLabId(), pageable)
+                return requisitionRepository
+                        .findByPatientIdAndLabIdWithTestsAndResults(patientIds.get(0), user.getLabId(), pageable)
                         .map(requisitionMapper::toDto);
             }
         }
 
         Specification<Requisition> spec = (root, query, cb) -> {
-            if (query.getResultType() != Long.class) {
-                root.fetch("patient");
+            if (Long.class != query.getResultType() && long.class != query.getResultType()) {
+                root.fetch("patient", JoinType.LEFT);
+                root.fetch("createdBy", JoinType.LEFT);
                 root.fetch("tests", JoinType.LEFT);
-                root.fetch("testResults", JoinType.LEFT);
+                // Note: testResults is NOT fetched here to avoid Cartesian product.
+                // The mapper will lazy-load testResults within the @Transactional context.
             }
+            // Ensure distinct results if we are joining collections
+            query.distinct(true);
 
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("lab").get("id"), user.getLabId()));
@@ -68,6 +73,9 @@ public class RequisitionService {
             }
 
             params.forEach((key, values) -> {
+                if (values == null || values.isEmpty() || values.getFirst() == null)
+                    return;
+
                 switch (key) {
                     case "status_ne":
                         for (String value : values) {
@@ -79,24 +87,16 @@ public class RequisitionService {
                         }
                         break;
                     case "id":
-                        if (values.getFirst() != null) {
-                            predicates.add(root.get("id").in(values.stream().map(Long::valueOf).toList()));
-                        }
+                        predicates.add(root.get("id").in(values.stream().map(Long::valueOf).toList()));
                         break;
                     case "patientId":
-                        if (values.getFirst() != null) {
-                            predicates.add(root.get("patient").get("id").in(values.stream().map(Long::valueOf).toList()));
-                        }
+                        predicates.add(root.get("patient").get("id").in(values.stream().map(Long::valueOf).toList()));
                         break;
                     case "createdById":
-                        if (values.getFirst() != null) {
-                            predicates.add(root.get("createdBy").get("id").in(values.stream().map(Long::valueOf).toList()));
-                        }
+                        predicates.add(root.get("createdBy").get("id").in(values.stream().map(Long::valueOf).toList()));
                         break;
                     case "status":
-                        if (values.getFirst() != null) {
-                            predicates.add(root.get("status").in(values.stream().map(SampleStatus::valueOf).toList()));
-                        }
+                        predicates.add(root.get("status").in(values.stream().map(SampleStatus::valueOf).toList()));
                         break;
                 }
             });
@@ -108,14 +108,16 @@ public class RequisitionService {
     }
 
     public RequisitionDto getRequisitionById(Long id) {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Optional<Requisition> requisitionOptional = requisitionRepository.findByIdAndLabIdWithTestsAndResults(id, user.getLabId());
-        Requisition requisition = requisitionOptional.orElseThrow(() -> new ResourceNotFoundException("Requisition not found with id: " + id));
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+        Optional<Requisition> requisitionOptional = requisitionRepository.findByIdAndLabIdWithTestsAndResults(id,
+                user.getLabId());
+        Requisition requisition = requisitionOptional
+                .orElseThrow(() -> new ResourceNotFoundException("Requisition not found with id: " + id));
         return requisitionMapper.toDto(requisition);
     }
 
     public RequisitionDto createRequisition(RequisitionDto requisitionDto) {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Requisition requisition = requisitionMapper.toEntity(requisitionDto);
 
         patientRepository.findById(requisitionDto.getPatientId()).ifPresent(requisition::setPatient);

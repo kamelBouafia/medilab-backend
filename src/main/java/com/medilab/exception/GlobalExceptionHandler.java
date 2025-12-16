@@ -57,9 +57,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    @ResponseBody
+    public ResponseEntity<Object> handleIllegalState(IllegalStateException ex) {
+        logger.warn("Illegal state: {}", ex.getMessage());
+        Map<String, String> body = new HashMap<>();
+        body.put("error", "illegal_state");
+        body.put("message", ex.getMessage());
+        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleAllExceptions(Exception ex) {
-        // Log the full exception on the server for diagnostics, but return a sanitized message to the client.
+        // Log the full exception on the server for diagnostics, but return a sanitized
+        // message to the client.
         logger.error("Unhandled exception caught in GlobalExceptionHandler", ex);
 
         Map<String, String> body = new HashMap<>();

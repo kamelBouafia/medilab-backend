@@ -13,7 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.medilab.security.SecurityUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -27,8 +27,7 @@ public class AuditLogService {
     private final AuditLogMapper auditLogMapper;
 
     public Page<AuditLogDto> getAuditTrail(int page, int limit, String q, String sort, String order) {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Sort.Direction direction = Sort.Direction.fromString(order);
         Pageable pageable = PageRequest.of(page, limit, Sort.by(direction, sort));
 
@@ -50,8 +49,7 @@ public class AuditLogService {
     }
 
     public void logAction(String action, String details) {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         logAction(user, action, details);
     }
 

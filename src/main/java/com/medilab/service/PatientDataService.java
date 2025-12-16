@@ -9,7 +9,7 @@ import com.medilab.repository.TestResultRepository;
 import com.medilab.security.AuthenticatedUser;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.medilab.security.SecurityUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,14 +26,14 @@ public class PatientDataService {
 
     @Transactional
     public List<RequisitionDto> getPatientRequisitions() {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         return requisitionRepository.findByPatientIdAndLabIdWithTests(user.getId(), user.getLabId()).stream()
                 .map(requisitionMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public List<TestResultDto> getPatientTestResults(Long reqId) {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         // Add logic to ensure the requisition belongs to the authenticated patient
         return testResultRepository.findByRequisitionIdAndLabId(reqId, user.getLabId()).stream()
                 .map(testResultMapper::toDto)

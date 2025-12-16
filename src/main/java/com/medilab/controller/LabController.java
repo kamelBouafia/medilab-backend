@@ -6,7 +6,7 @@ import com.medilab.repository.LabRepository;
 import com.medilab.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.medilab.security.SecurityUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,10 +20,11 @@ public class LabController {
 
     @GetMapping("/me")
     public ResponseEntity<LabDto> getMyLab() {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Long labId = user.getLabId();
         Lab lab = labRepository.findById(labId).orElse(null);
-        if (lab == null) return ResponseEntity.notFound().build();
+        if (lab == null)
+            return ResponseEntity.notFound().build();
 
         LabDto dto = LabDto.builder()
                 .id(lab.getId())
@@ -38,4 +39,3 @@ public class LabController {
         return ResponseEntity.ok(dto);
     }
 }
-
