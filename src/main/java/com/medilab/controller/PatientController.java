@@ -1,6 +1,7 @@
 package com.medilab.controller;
 
 import com.medilab.dto.PatientDto;
+import com.medilab.service.AuditLogService;
 import com.medilab.service.PatientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.List;
 public class PatientController {
 
     private final PatientService patientService;
+    private final AuditLogService auditLogService;
 
     @GetMapping
     public ResponseEntity<List<PatientDto>> getPatients(
@@ -36,12 +38,17 @@ public class PatientController {
 
     @PostMapping
     public ResponseEntity<PatientDto> createPatient(@Valid @RequestBody PatientDto patientDto) {
-        return new ResponseEntity<>(patientService.createPatient(patientDto), HttpStatus.CREATED);
+        PatientDto created = patientService.createPatient(patientDto);
+        auditLogService.logAction("CREATE_PATIENT", "Created patient: " + created.getName());
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @PutMapping("/{patientId}")
-    public ResponseEntity<PatientDto> updatePatient(@PathVariable Long patientId, @Valid @RequestBody PatientDto patientDto) {
-        return ResponseEntity.ok(patientService.updatePatient(patientId, patientDto));
+    public ResponseEntity<PatientDto> updatePatient(@PathVariable Long patientId,
+            @Valid @RequestBody PatientDto patientDto) {
+        PatientDto updated = patientService.updatePatient(patientId, patientDto);
+        auditLogService.logAction("UPDATE_PATIENT", "Updated patient ID: " + patientId);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{patientId}")

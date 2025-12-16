@@ -12,7 +12,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class WithMockAuthenticatedUserSecurityContextFactory implements WithSecurityContextFactory<WithMockAuthenticatedUser> {
+public class WithMockAuthenticatedUserSecurityContextFactory
+        implements WithSecurityContextFactory<WithMockAuthenticatedUser> {
 
     @Override
     public SecurityContext createSecurityContext(WithMockAuthenticatedUser customUser) {
@@ -28,10 +29,11 @@ public class WithMockAuthenticatedUserSecurityContextFactory implements WithSecu
                 customUser.username(),
                 customUser.password(),
                 authorities,
-                "staff"
-        );
+                "staff",
+                false);
 
-        Authentication auth = new UsernamePasswordAuthenticationToken(principal, "password", principal.getAuthorities());
+        Authentication auth = new UsernamePasswordAuthenticationToken(principal, "password",
+                principal.getAuthorities());
         context.setAuthentication(auth);
         return context;
     }

@@ -1,6 +1,7 @@
 package com.medilab.controller;
 
 import com.medilab.dto.TestResultDto;
+import com.medilab.service.AuditLogService;
 import com.medilab.service.TestResultService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,10 +19,14 @@ import java.util.List;
 public class TestResultController {
 
     private final TestResultService testResultService;
+    private final AuditLogService auditLogService;
 
     @PostMapping
     public ResponseEntity<?> saveTestResults(@Valid @RequestBody List<TestResultDto> testResultDtos) {
         testResultService.saveTestResults(testResultDtos);
+
+        auditLogService.logAction("ENTER_RESULTS", "Entered " + testResultDtos.size() + " test results");
+
         return new ResponseEntity<>(java.util.Map.of("message", "Results saved successfully"), HttpStatus.CREATED);
     }
 }

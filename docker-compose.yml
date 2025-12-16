@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-placeholder}
+    networks:
+      - medilab-network
+
+  frontend:
+    build: ../medilab-pro-github/AI-generated
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - medilab-network
+
+networks:
+  medilab-network:
+    driver: bridge

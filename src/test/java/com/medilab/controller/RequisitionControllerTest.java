@@ -59,18 +59,30 @@ public class RequisitionControllerTest {
     @BeforeEach
     void setUp() {
         lab = labRepository.save(Lab.builder().name("Test Lab").location("Test Location").build());
-        staffUser1 = staffUserRepository.save(StaffUser.builder().username("staff1").password("password").name("Staff One").email("staff1@medilab.com").phone("1112223333").role(StaffUser.Role.Manager).lab(lab).build());
-        StaffUser staffUser2 = staffUserRepository.save(StaffUser.builder().username("staff2").password("password").name("Staff Two").email("staff2@medilab.com").phone("4445556666").role(StaffUser.Role.Technician).lab(lab).build());
+        staffUser1 = staffUserRepository
+                .save(StaffUser.builder().username("staff1").password("password").name("Staff One")
+                        .email("staff1@medilab.com").phone("1112223333").role(StaffUser.Role.Manager).lab(lab).build());
+        StaffUser staffUser2 = staffUserRepository.save(StaffUser.builder().username("staff2").password("password")
+                .name("Staff Two").email("staff2@medilab.com").phone("4445556666").role(StaffUser.Role.Technician)
+                .lab(lab).build());
 
         // Set up the security context
-        AuthenticatedUser authenticatedUser = new AuthenticatedUser(staffUser1.getId(), staffUser1.getLab().getId(), staffUser1.getUsername(), staffUser1.getPassword(), Collections.emptyList(), "staff");
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(authenticatedUser, null, authenticatedUser.getAuthorities()));
+        AuthenticatedUser authenticatedUser = new AuthenticatedUser(staffUser1.getId(), staffUser1.getLab().getId(),
+                staffUser1.getUsername(), staffUser1.getPassword(), Collections.emptyList(), "staff", false);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(authenticatedUser, null, authenticatedUser.getAuthorities()));
 
-        patient1 = patientRepository.save(Patient.builder().username("patient1").name("John Doe").phone("1234567890").email("john.doe@example.com").dob(LocalDate.now()).gender(Patient.Gender.Male).address("123 Main St").bloodGroup("A+").allergies("None").createdBy(staffUser1).lab(lab).build());
-        Patient patient2 = patientRepository.save(Patient.builder().username("patient2").name("Jane Smith").phone("0987654321").email("jane.smith@example.com").dob(LocalDate.now()).gender(Patient.Gender.Female).address("456 Oak Ave").bloodGroup("B-").allergies("Peanuts").createdBy(staffUser2).lab(lab).build());
+        patient1 = patientRepository.save(Patient.builder().username("patient1").name("John Doe").phone("1234567890")
+                .email("john.doe@example.com").dob(LocalDate.now()).gender(Patient.Gender.Male).address("123 Main St")
+                .bloodGroup("A+").allergies("None").createdBy(staffUser1).lab(lab).build());
+        Patient patient2 = patientRepository.save(Patient.builder().username("patient2").name("Jane Smith")
+                .phone("0987654321").email("jane.smith@example.com").dob(LocalDate.now()).gender(Patient.Gender.Female)
+                .address("456 Oak Ave").bloodGroup("B-").allergies("Peanuts").createdBy(staffUser2).lab(lab).build());
 
-        LabTest test1 = labTestRepository.save(LabTest.builder().name("Blood Test").category("Hematology").price(50.0).lab(lab).build());
-        LabTest test2 = labTestRepository.save(LabTest.builder().name("Urine Test").category("Urology").price(40.0).lab(lab).build());
+        LabTest test1 = labTestRepository
+                .save(LabTest.builder().name("Blood Test").category("Hematology").price(50.0).lab(lab).build());
+        LabTest test2 = labTestRepository
+                .save(LabTest.builder().name("Urine Test").category("Urology").price(40.0).lab(lab).build());
 
         requisition1 = Requisition.builder()
                 .patient(patient1)
@@ -144,7 +156,8 @@ public class RequisitionControllerTest {
 
     @Test
     void createRequisition_shouldCreateRequisition() throws Exception {
-        LabTest test = labTestRepository.save(LabTest.builder().name("X-Ray").category("Radiology").price(150.0).lab(lab).build());
+        LabTest test = labTestRepository
+                .save(LabTest.builder().name("X-Ray").category("Radiology").price(150.0).lab(lab).build());
         RequisitionDto newRequisitionDto = RequisitionDto.builder()
                 .patientId(patient1.getId())
                 .doctorName("Dr. Doom")
@@ -152,8 +165,8 @@ public class RequisitionControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/requisitions")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(newRequisitionDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(newRequisitionDto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.doctorName").value("Dr. Doom"));
@@ -165,8 +178,8 @@ public class RequisitionControllerTest {
         statusUpdateDto.setStatus("COLLECTED");
 
         mockMvc.perform(patch("/api/requisitions/{requisitionId}/status", requisition1.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(statusUpdateDto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(statusUpdateDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COLLECTED"));
     }

@@ -27,7 +27,8 @@ public class AuditLogService {
     private final AuditLogMapper auditLogMapper;
 
     public Page<AuditLogDto> getAuditTrail(int page, int limit, String q, String sort, String order) {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication()
+                .getPrincipal();
         Sort.Direction direction = Sort.Direction.fromString(order);
         Pageable pageable = PageRequest.of(page, limit, Sort.by(direction, sort));
 
@@ -39,20 +40,22 @@ public class AuditLogService {
         };
 
         if (StringUtils.hasText(q)) {
-            spec = spec.and((root, query, cb) ->
-                    cb.or(
-                            cb.like(cb.lower(root.get("action")), "%" + q.toLowerCase() + "%"),
-                            cb.like(cb.lower(root.get("details")), "%" + q.toLowerCase() + "%"),
-                            cb.like(cb.lower(root.get("user").get("username")), "%" + q.toLowerCase() + "%")
-                    )
-            );
+            spec = spec.and((root, query, cb) -> cb.or(
+                    cb.like(cb.lower(root.get("action")), "%" + q.toLowerCase() + "%"),
+                    cb.like(cb.lower(root.get("details")), "%" + q.toLowerCase() + "%"),
+                    cb.like(cb.lower(root.get("user").get("username")), "%" + q.toLowerCase() + "%")));
         }
 
         return auditLogRepository.findAll(spec, pageable).map(auditLogMapper::toDto);
     }
 
     public void logAction(String action, String details) {
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication()
+                .getPrincipal();
+        logAction(user, action, details);
+    }
+
+    public void logAction(AuthenticatedUser user, String action, String details) {
         AuditLog auditLog = new AuditLog();
         auditLog.setAction(action);
         auditLog.setDetails(details);

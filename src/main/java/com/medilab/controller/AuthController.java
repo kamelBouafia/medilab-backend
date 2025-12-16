@@ -11,6 +11,7 @@ import com.medilab.repository.PatientRepository;
 import com.medilab.repository.StaffUserRepository;
 import com.medilab.security.AuthenticatedUser;
 import com.medilab.security.JwtUtil;
+import com.medilab.service.AuditLogService;
 import com.medilab.service.LabService;
 import com.medilab.service.StaffService;
 import com.medilab.service.TrialService;
@@ -41,6 +42,7 @@ public class AuthController {
     private final PatientRepository patientRepository;
     private final PasswordEncoder passwordEncoder;
     private final TrialService trialService;
+    private final AuditLogService auditLogService;
 
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest loginRequest) {
@@ -53,6 +55,8 @@ public class AuthController {
         labService.findById(user.getLabId()).ifPresent(trialService::assertTrialActive);
 
         String jwt = jwtUtil.generateToken(user);
+
+        auditLogService.logAction(user, "LOGIN", "User logged in: " + user.getUsername());
 
         return new LoginResponse(jwt);
     }
@@ -68,6 +72,8 @@ public class AuthController {
         labService.findById(user.getLabId()).ifPresent(trialService::assertTrialActive);
 
         String jwt = jwtUtil.generateToken(user);
+
+        auditLogService.logAction(user, "PATIENT_LOGIN", "Patient logged in: " + user.getUsername());
 
         return new LoginResponse(jwt);
     }
@@ -86,7 +92,8 @@ public class AuthController {
                 .build();
         Lab savedLab = labService.createLab(lab);
 
-        // Create Manager staff via StaffService (this will encode password and set force change)
+        // Create Manager staff via StaffService (this will encode password and set
+        // force change)
         com.medilab.dto.CreateStaffRequest createReq = new com.medilab.dto.CreateStaffRequest();
         createReq.setName(req.getAdminName());
         createReq.setUsername(req.getAdminUsername());
@@ -105,6 +112,8 @@ public class AuthController {
 
         AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
         String jwt = jwtUtil.generateToken(user);
+
+        auditLogService.logAction(user, "REGISTER_LAB", "New lab registered: " + req.getLabName());
 
         return new LoginResponse(jwt);
     }
@@ -125,10 +134,13 @@ public class AuthController {
         } else if ("patient".equals(user.getUserType())) {
             patientRepository.findById(user.getId()).ifPresent(patient -> {
                 patient.setDob(java.time.LocalDate.parse(req.getNewPassword()));
-                // Patient passwords are DOB; to change we update the dob field. Not ideal but matches current auth design.
+                // Patient passwords are DOB; to change we update the dob field. Not ideal but
+                // matches current auth design.
                 patientRepository.save(patient);
             });
         }
+
+        auditLogService.logAction(user, "CHANGE_PASSWORD", "Password changed for user: " + user.getUsername());
 
         return ResponseEntity.ok().build();
     }
