@@ -22,11 +22,13 @@ services:
     build: .
     ports:
       - "8080:8080"
+      - "5005:5005"
     environment:
       - GOOGLE_API_KEY=${GOOGLE_API_KEY:-placeholder}
       - DB_URL=jdbc:postgresql://postgres:5432/medilab_db
       - DB_USERNAME=postgres
       - DB_PASSWORD=password
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
     depends_on:
       postgres:
         condition: service_healthy
