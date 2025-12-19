@@ -29,6 +29,12 @@ services:
       - DB_USERNAME=postgres
       - DB_PASSWORD=password
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+      - LIQUIBASE_DUPLICATE_FILE_MODE=WARN
+    volumes:
+      - ./target/classes:/app/classes
+      - ./src/main/resources:/app/resources
+    # No entrypoint/command needed here as the Dockerfile one works with the volume mount,
+    # and DevTools will handle reactivation.
     depends_on:
       postgres:
         condition: service_healthy
@@ -36,9 +42,18 @@ services:
       - medilab-network
 
   frontend:
-    build: ../medilab-pro-github/AI-generated
+    image: node:20-alpine
+    working_dir: /app
     ports:
-      - "80:80"
+      - "80:3000"
+    volumes:
+      - ../medilab-pro-frontend:/app
+      - /app/node_modules # Avoid overwriting container node_modules with host ones if they differ (optional but good)
+    environment:
+      - VITE_BACKEND_URL=http://localhost:8080
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     depends_on:
       - backend
     networks:

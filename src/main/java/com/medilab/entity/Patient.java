@@ -29,6 +29,7 @@ public class Patient {
     private String username;
 
     private String phone;
+    @Column(nullable = false)
     private String email;
     private String contact;
     private LocalDate dob;

@@ -101,6 +101,13 @@ public class PatientService {
         patient.setUsername(base + "_" + java.util.UUID.randomUUID().toString().substring(0, 8));
     }
 
+    public PatientDto getPatientById(Long patientId) {
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+        Patient patient = patientRepository.findByIdAndLabId(patientId, user.getLabId())
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
+        return patientMapper.toDto(patient);
+    }
+
     public PatientDto updatePatient(Long patientId, PatientDto patientDto) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Patient existingPatient = patientRepository.findByIdAndLabId(patientId, user.getLabId())

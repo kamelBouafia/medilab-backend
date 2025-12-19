@@ -29,7 +29,7 @@ public class AuditLogService {
     public Page<AuditLogDto> getAuditTrail(int page, int limit, String q, String sort, String order) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Sort.Direction direction = Sort.Direction.fromString(order);
-        Pageable pageable = PageRequest.of(page, limit, Sort.by(direction, sort));
+        Pageable pageable = PageRequest.of(page - 1, limit, Sort.by(direction, sort));
 
         Specification<AuditLog> spec = (root, query, cb) -> {
             if (query.getResultType() != Long.class) {

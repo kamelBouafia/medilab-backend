@@ -5,13 +5,10 @@ import com.medilab.service.LabTestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/lab-tests")
@@ -22,16 +19,14 @@ public class LabTestController {
     private final LabTestService labTestService;
 
     @GetMapping
-    public ResponseEntity<List<LabTestDto>> getLabTests(
+    public ResponseEntity<Page<LabTestDto>> getLabTests(
             @RequestParam(defaultValue = "0") int _page,
             @RequestParam(defaultValue = "10") int _limit,
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "name") String _sort,
             @RequestParam(defaultValue = "asc") String _order) {
         Page<LabTestDto> labTestPage = labTestService.getLabTests(_page, _limit, q, _sort, _order);
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("X-Total-Count", String.valueOf(labTestPage.getTotalElements()));
-        return ResponseEntity.ok().headers(headers).body(labTestPage.getContent());
+        return ResponseEntity.ok(labTestPage);
     }
 
     @PostMapping
@@ -40,7 +35,8 @@ public class LabTestController {
     }
 
     @PutMapping("/{testId}")
-    public ResponseEntity<LabTestDto> updateLabTest(@PathVariable Long testId, @Valid @RequestBody LabTestDto labTestDto) {
+    public ResponseEntity<LabTestDto> updateLabTest(@PathVariable Long testId,
+            @Valid @RequestBody LabTestDto labTestDto) {
         return ResponseEntity.ok(labTestService.updateLabTest(testId, labTestDto));
     }
 

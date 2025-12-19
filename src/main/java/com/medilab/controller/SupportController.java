@@ -6,7 +6,6 @@ import com.medilab.dto.SupportTicketDto;
 import com.medilab.service.SupportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -42,7 +41,14 @@ public class SupportController {
             @RequestParam(required = false) Long labId,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long userId,
-            Pageable pageable) {
+            @RequestParam(defaultValue = "0") int _page,
+            @RequestParam(defaultValue = "10") int _limit,
+            @RequestParam(defaultValue = "createdAt") String _sort,
+            @RequestParam(defaultValue = "desc") String _order) {
+        org.springframework.data.domain.Sort.Direction direction = org.springframework.data.domain.Sort.Direction
+                .fromString(_order);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest
+                .of(_page > 0 ? _page - 1 : 0, _limit, org.springframework.data.domain.Sort.by(direction, _sort));
         Page<SupportTicketDto> page = supportService.searchSupportTickets(q, labId, status, userId, pageable);
         return ResponseEntity.ok(page);
     }
@@ -54,7 +60,8 @@ public class SupportController {
     }
 
     @PutMapping("/tickets/{id}")
-    public ResponseEntity<SupportTicketDto> updateTicket(@PathVariable Long id, @Valid @RequestBody SupportTicketDto ticketDto) {
+    public ResponseEntity<SupportTicketDto> updateTicket(@PathVariable Long id,
+            @Valid @RequestBody SupportTicketDto ticketDto) {
         SupportTicketDto updatedTicket = supportService.updateTicket(id, ticketDto);
         return ResponseEntity.ok(updatedTicket);
     }
