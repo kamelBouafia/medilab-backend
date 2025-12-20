@@ -28,16 +28,41 @@ services:
       - DB_URL=jdbc:postgresql://postgres:5432/medilab_db
       - DB_USERNAME=postgres
       - DB_PASSWORD=password
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
       - LIQUIBASE_DUPLICATE_FILE_MODE=WARN
-    volumes:
-      - ./target/classes:/app/classes
-      - ./src/main/resources:/app/resources
+    # volumes:
+    #   - ./target/classes:/app/classes
+    #   - ./src/main/resources:/app/resources
     # No entrypoint/command needed here as the Dockerfile one works with the volume mount,
     # and DevTools will handle reactivation.
     depends_on:
       postgres:
         condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    networks:
+      - medilab-network
+
+  notification:
+    build:
+      context: ../medilab-pro-notification-service
+    ports:
+      - "8081:8081"
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+      - MAIL_HOST=smtp.gmail.com
+      - MAIL_PORT=587
+      - MAIL_USERNAME=ko.mail.sender@gmail.com
+      - MAIL_PASSWORD=wscidfgsuzgtmmuo
+    depends_on:
+      - rabbitmq
     networks:
       - medilab-network
 
@@ -56,6 +81,18 @@ services:
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     depends_on:
       - backend
+    networks:
+      - medilab-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: medilab-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
     networks:
       - medilab-network
 

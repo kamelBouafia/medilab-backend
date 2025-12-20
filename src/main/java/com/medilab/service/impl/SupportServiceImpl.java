@@ -8,6 +8,8 @@ import com.medilab.exception.ResourceNotFoundException;
 import com.medilab.mapper.SupportTicketMapper;
 import com.medilab.repository.SupportTicketRepository;
 import com.medilab.security.AuthenticatedUser;
+import com.medilab.dto.NotificationRequestDTO;
+import com.medilab.service.NotificationProducerService;
 import com.medilab.service.SupportService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -31,6 +33,7 @@ public class SupportServiceImpl implements SupportService {
 
     private final SupportTicketRepository repository;
     private final SupportTicketMapper mapper;
+    private final NotificationProducerService notificationProducerService;
 
     @Override
     public SupportContactResponse createSupportTicket(SupportContactRequest request) {
@@ -59,11 +62,29 @@ public class SupportServiceImpl implements SupportService {
 
         SupportTicket saved = repository.save(ticket);
 
+        sendSupportNotification(saved);
+
         return new SupportContactResponse(saved.getTicketId(), saved.getStatus());
     }
 
+    private void sendSupportNotification(SupportTicket ticket) {
+        try {
+            NotificationRequestDTO notification = NotificationRequestDTO.builder()
+                    .recipient(ticket.getEmail() != null ? ticket.getEmail() : "ak_bouafia@esi.dz") // Admin recipient
+                    .subject("New Support Ticket: " + ticket.getTicketId())
+                    .content("A new support ticket has been created.\n\nSubject: " + ticket.getSubject() + "\nMessage: "
+                            + ticket.getMessage())
+                    .type("EMAIL")
+                    .build();
+            notificationProducerService.sendNotification(notification);
+        } catch (Exception e) {
+            log.error("Failed to queue notification for ticket {}", ticket.getTicketId(), e);
+        }
+    }
+
     @Override
-    public Page<SupportTicketDto> searchSupportTickets(String q, Long labId, String status, Long userId, Pageable pageable) {
+    public Page<SupportTicketDto> searchSupportTickets(String q, Long labId, String status, Long userId,
+            Pageable pageable) {
         Authentication authentication = getAuthentication();
 
         String q1 = (q == null || q.isBlank()) ? null : q;
@@ -76,7 +97,8 @@ public class SupportServiceImpl implements SupportService {
         AuthenticatedUser authenticatedUser = getAuthenticatedUser(authentication);
 
         if ("patient".equals(authenticatedUser.getUserType())) {
-            return repository.search(q1, authenticatedUser.getLabId(), status1, authenticatedUser.getId(), pageable).map(mapper::toDto);
+            return repository.search(q1, authenticatedUser.getLabId(), status1, authenticatedUser.getId(), pageable)
+                    .map(mapper::toDto);
         } else {
             return repository.search(q1, authenticatedUser.getLabId(), status1, null, pageable).map(mapper::toDto);
         }
