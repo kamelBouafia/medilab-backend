@@ -49,7 +49,7 @@ services:
 
   notification:
     build:
-      context: ../medilab-pro-notification-service
+      context: ./services/notification-service
     ports:
       - "8081:8081"
     environment:
