@@ -113,6 +113,7 @@ public class RequisitionService {
         return requisitionRepository.findAll(spec, pageable).map(requisitionMapper::toDto);
     }
 
+    @Transactional(readOnly = true)
     public RequisitionDto getRequisitionById(Long id) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Optional<Requisition> requisitionOptional = requisitionRepository.findByIdAndLabIdWithTestsAndResults(id,

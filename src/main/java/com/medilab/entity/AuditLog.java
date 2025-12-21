@@ -29,7 +29,7 @@ public class AuditLog {
     private OffsetDateTime timestamp;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private StaffUser user;
 
     private String action;

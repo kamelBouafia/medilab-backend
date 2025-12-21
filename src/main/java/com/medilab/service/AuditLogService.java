@@ -7,6 +7,7 @@ import com.medilab.repository.AuditLogRepository;
 import com.medilab.repository.LabRepository;
 import com.medilab.repository.StaffUserRepository;
 import com.medilab.security.AuthenticatedUser;
+import jakarta.persistence.criteria.JoinType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,7 +34,7 @@ public class AuditLogService {
 
         Specification<AuditLog> spec = (root, query, cb) -> {
             if (query.getResultType() != Long.class) {
-                root.fetch("user");
+                root.fetch("user", JoinType.LEFT);
             }
             return cb.equal(root.get("lab").get("id"), user.getLabId());
         };
