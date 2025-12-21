@@ -10,7 +10,9 @@ import com.medilab.repository.SupportTicketRepository;
 import com.medilab.security.AuthenticatedUser;
 import com.medilab.dto.NotificationRequestDTO;
 import com.medilab.service.NotificationProducerService;
+import com.medilab.repository.LabRepository;
 import com.medilab.service.SupportService;
+import com.medilab.entity.Lab;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,9 @@ public class SupportServiceImpl implements SupportService {
     private final SupportTicketRepository repository;
     private final SupportTicketMapper mapper;
     private final NotificationProducerService notificationProducerService;
+    private final LabRepository labRepository;
+
+    private static final String SYSTEM_ADMIN_EMAIL = "ak_bouafia@esi.dz";
 
     @Override
     public SupportContactResponse createSupportTicket(SupportContactRequest request) {
@@ -69,17 +74,48 @@ public class SupportServiceImpl implements SupportService {
 
     private void sendSupportNotification(SupportTicket ticket) {
         try {
+            String recipient = SYSTEM_ADMIN_EMAIL;
+            Authentication authentication = getAuthentication();
+
+            if (authentication != null
+                    && authentication.getPrincipal() instanceof AuthenticatedUser authenticatedUser) {
+                if ("staff".equalsIgnoreCase(authenticatedUser.getUserType())) {
+                    // Staff/Manager -> System Admin
+                    recipient = SYSTEM_ADMIN_EMAIL;
+                } else if ("patient".equalsIgnoreCase(authenticatedUser.getUserType())) {
+                    // Patient -> Lab Manager
+                    recipient = getLabContactEmail(ticket.getLabId());
+                }
+            } else {
+                // Anonymous -> Lab Manager or System Admin (depending on if labId is provided)
+                if (ticket.getLabId() != null) {
+                    recipient = getLabContactEmail(ticket.getLabId());
+                }
+            }
+
             NotificationRequestDTO notification = NotificationRequestDTO.builder()
-                    .recipient(ticket.getEmail() != null ? ticket.getEmail() : "ak_bouafia@esi.dz") // Admin recipient
+                    .recipient(recipient)
                     .subject("New Support Ticket: " + ticket.getTicketId())
-                    .content("A new support ticket has been created.\n\nSubject: " + ticket.getSubject() + "\nMessage: "
-                            + ticket.getMessage())
+                    .content("A new support ticket has been created.\n\n" +
+                            "From: " + ticket.getName() + " ("
+                            + (ticket.getEmail() != null ? ticket.getEmail() : "Authenticated User") + ")\n" +
+                            "Subject: " + ticket.getSubject() + "\n" +
+                            "Message: " + ticket.getMessage())
                     .type("EMAIL")
                     .build();
             notificationProducerService.sendNotification(notification);
         } catch (Exception e) {
             log.error("Failed to queue notification for ticket {}", ticket.getTicketId(), e);
         }
+    }
+
+    private String getLabContactEmail(Long labId) {
+        if (labId == null)
+            return SYSTEM_ADMIN_EMAIL;
+        return labRepository.findById(labId)
+                .map(Lab::getContactEmail)
+                .filter(email -> email != null && !email.isBlank())
+                .orElse(SYSTEM_ADMIN_EMAIL);
     }
 
     @Override

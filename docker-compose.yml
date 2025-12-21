@@ -34,11 +34,10 @@ services:
       - RABBITMQ_PASSWORD=guest
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
       - LIQUIBASE_DUPLICATE_FILE_MODE=WARN
-    # volumes:
-    #   - ./target/classes:/app/classes
-    #   - ./src/main/resources:/app/resources
-    # No entrypoint/command needed here as the Dockerfile one works with the volume mount,
-    # and DevTools will handle reactivation.
+    volumes:
+      - ./target/classes:/app/classes
+      - ./src/main/resources:/app/resources
+    # DevTools will handle reactivation when these volumes are updated.
     depends_on:
       postgres:
         condition: service_healthy
@@ -61,6 +60,10 @@ services:
       - MAIL_PORT=587
       - MAIL_USERNAME=ko.mail.sender@gmail.com
       - MAIL_PASSWORD=wscidfgsuzgtmmuo
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006
+    volumes:
+      - ./services/notification-service/target/classes:/app/classes
+      - ./services/notification-service/src/main/resources:/app/resources
     depends_on:
       - rabbitmq
     networks:
