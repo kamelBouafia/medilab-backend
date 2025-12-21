@@ -153,6 +153,21 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- iText PDF for report generation -->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itext-core</artifactId>
+            <version>8.0.2</version>
+            <type>pom</type>
+        </dependency>
+
+        <!-- MinIO Java SDK for object storage -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.7</version>
+        </dependency>
+
     </dependencies>
 
     <build>

@@ -34,6 +34,10 @@ services:
       - RABBITMQ_PASSWORD=guest
       - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
       - LIQUIBASE_DUPLICATE_FILE_MODE=WARN
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_BUCKET_NAME=medilab-reports
     volumes:
       - ./target/classes:/app/classes
       - ./src/main/resources:/app/resources
@@ -43,6 +47,8 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_started
+      minio:
+        condition: service_healthy
     networks:
       - medilab-network
 
@@ -99,9 +105,30 @@ services:
     networks:
       - medilab-network
 
+  minio:
+    image: minio/minio:latest
+    container_name: medilab-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - medilab-network
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 networks:
   medilab-network:
     driver: bridge
 
 volumes:
   postgres-data:
+  minio-data:

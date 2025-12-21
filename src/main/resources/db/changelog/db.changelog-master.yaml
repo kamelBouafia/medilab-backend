@@ -5,3 +5,9 @@ databaseChangeLog:
   - include:
       file: changes/02-data.sql
       relativeToChangelogFile: true
+  - include:
+      file: changes/03-add-pdf-fields.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/04-rename-pdf-column.sql
+      relativeToChangelogFile: true

@@ -31,6 +31,9 @@ public class TestResultService {
     private final RequisitionRepository requisitionRepository;
     private final LabTestRepository labTestRepository;
     private final StaffUserRepository staffUserRepository;
+    private final PdfReportService pdfReportService;
+    private final MinIOService minIOService;
+    private final NotificationProducerService notificationProducerService;
     private final LabRepository labRepository;
     private final TestResultMapper testResultMapper;
 
@@ -71,13 +74,101 @@ public class TestResultService {
 
         List<TestResult> savedTestResults = testResultRepository.saveAll(resultsToSave);
 
-        // Update requisition status to 'Completed'
-        requisition.setStatus(SampleStatus.COMPLETED);
-        requisition.setCompletionDate(LocalDateTime.now());
-        requisitionRepository.save(requisition);
+        // Check if all tests for this requisition now have results
+        long totalTests = requisition.getTests().size();
+        long completedTests = testResultRepository.countByRequisitionId(requisitionId);
+
+        if (totalTests == completedTests) {
+            // All tests are complete, update status and generate PDF
+            requisition.setStatus(SampleStatus.COMPLETED);
+            requisition.setCompletionDate(LocalDateTime.now());
+            requisitionRepository.save(requisition);
+
+            // Generate and upload PDF report
+            generateAndUploadPdfReport(requisition);
+        }
 
         return savedTestResults.stream()
                 .map(testResultMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    private void generateAndUploadPdfReport(Requisition requisition) {
+        try {
+            // Build report data
+            com.medilab.dto.ReportGenerationDto reportData = buildReportData(requisition);
+
+            // Generate PDF
+            byte[] pdfBytes = pdfReportService.generateReport(reportData);
+
+            // Upload to MinIO
+            String fileName = "report_" + requisition.getId() + "_" + System.currentTimeMillis() + ".pdf";
+            String objectPath = minIOService.uploadPdf(fileName, pdfBytes);
+
+            // Store object path in requisition (not the presigned URL)
+            requisition.setPdfObjectPath(objectPath);
+            requisition.setPdfGeneratedAt(LocalDateTime.now());
+            requisitionRepository.save(requisition);
+
+            // Generate presigned URL for email notification
+            String pdfUrl = minIOService.getPresignedUrl(objectPath);
+
+            // Send email notification
+            sendReportNotification(requisition, pdfUrl);
+        } catch (Exception e) {
+            // Log error but don't fail the transaction
+            System.err.println("Error generating PDF report: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private com.medilab.dto.ReportGenerationDto buildReportData(Requisition requisition) {
+        List<com.medilab.dto.ReportGenerationDto.TestResultDetail> testResults = requisition.getTestResults().stream()
+                .map(tr -> com.medilab.dto.ReportGenerationDto.TestResultDetail.builder()
+                        .testName(tr.getTest().getName())
+                        .testCategory(tr.getTest().getCategory())
+                        .resultValue(tr.getResultValue())
+                        .interpretation(tr.getInterpretation())
+                        .build())
+                .collect(Collectors.toList());
+
+        return com.medilab.dto.ReportGenerationDto.builder()
+                .labName(requisition.getLab().getName())
+                .labLocation(requisition.getLab().getLocation())
+                .labContactEmail(requisition.getLab().getContactEmail())
+                .labLicenseNumber(requisition.getLab().getLicenseNumber())
+                .patientName(requisition.getPatient().getName())
+                .patientDob(requisition.getPatient().getDob())
+                .patientGender(requisition.getPatient().getGender().name())
+                .patientPhone(requisition.getPatient().getPhone())
+                .patientEmail(requisition.getPatient().getEmail())
+                .patientAddress(requisition.getPatient().getAddress())
+                .patientBloodGroup(requisition.getPatient().getBloodGroup())
+                .patientAllergies(requisition.getPatient().getAllergies())
+                .requisitionId(requisition.getId())
+                .doctorName(requisition.getDoctorName())
+                .requisitionDate(requisition.getDate().toLocalDateTime())
+                .completionDate(requisition.getCompletionDate())
+                .testResults(testResults)
+                .build();
+    }
+
+    private void sendReportNotification(Requisition requisition, String pdfUrl) {
+        com.medilab.dto.NotificationRequestDTO notification = new com.medilab.dto.NotificationRequestDTO();
+        notification.setType("EMAIL");
+        notification.setRecipient(requisition.getPatient().getEmail());
+        notification.setSubject("Your Medical Test Results are Ready");
+        notification.setContent(
+                "Dear " + requisition.getPatient().getName() + ",\n\n" +
+                        "Your medical test results for requisition #" + requisition.getId() + " are now ready.\n\n" +
+                        "You can download your report using the link below:\n" +
+                        pdfUrl + "\n\n" +
+                        "Please note: This link will expire in 7 days. The report will be available for 30 days.\n\n" +
+                        "If you have any questions about your results, please consult with your healthcare provider.\n\n"
+                        +
+                        "Best regards,\n" +
+                        requisition.getLab().getName());
+
+        notificationProducerService.sendNotification(notification);
     }
 }

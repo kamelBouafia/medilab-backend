@@ -41,6 +41,8 @@ public class RequisitionService {
     private final LabRepository labRepository;
     private final LabTestRepository labTestRepository;
     private final RequisitionMapper requisitionMapper;
+    private final NotificationProducerService notificationProducerService;
+    private final MinIOService minIOService;
 
     @Transactional(readOnly = true)
     public Page<RequisitionDto> getRequisitions(int page, int limit, String q, String sort, String order,
@@ -155,5 +157,53 @@ public class RequisitionService {
 
         Requisition updatedRequisition = requisitionRepository.save(requisition);
         return requisitionMapper.toDto(updatedRequisition);
+    }
+
+    public String getReportUrl(Long requisitionId) {
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+        Requisition requisition = requisitionRepository
+                .findByIdAndLabIdWithTestsAndResults(requisitionId, user.getLabId())
+                .orElseThrow(() -> new ResourceNotFoundException("Requisition not found with id: " + requisitionId));
+
+        if (requisition.getPdfObjectPath() == null) {
+            throw new IllegalStateException("PDF report has not been generated yet for this requisition");
+        }
+
+        // Generate presigned URL on-demand from stored object path
+        return minIOService.getPresignedUrl(requisition.getPdfObjectPath());
+    }
+
+    @Transactional
+    public void resendReport(Long requisitionId) {
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+        Requisition requisition = requisitionRepository
+                .findByIdAndLabIdWithTestsAndResults(requisitionId, user.getLabId())
+                .orElseThrow(() -> new ResourceNotFoundException("Requisition not found with id: " + requisitionId));
+
+        if (requisition.getPdfObjectPath() == null) {
+            throw new IllegalStateException("PDF report has not been generated yet for this requisition");
+        }
+
+        // Generate fresh presigned URL for the email
+        String pdfUrl = minIOService.getPresignedUrl(requisition.getPdfObjectPath());
+
+        // Send notification email with PDF link
+        com.medilab.dto.NotificationRequestDTO notification = new com.medilab.dto.NotificationRequestDTO();
+        notification.setType("EMAIL");
+        notification.setRecipient(requisition.getPatient().getEmail());
+        notification.setSubject("Your Medical Test Results - Resent");
+        notification.setContent(
+                "Dear " + requisition.getPatient().getName() + ",\n\n" +
+                        "As requested, here is your medical test results report for requisition #" + requisition.getId()
+                        + ".\n\n" +
+                        "You can download your report using the link below:\n" +
+                        pdfUrl + "\n\n" +
+                        "Please note: This link will expire in 7 days. The report will be available for 30 days.\n\n" +
+                        "If you have any questions about your results, please consult with your healthcare provider.\n\n"
+                        +
+                        "Best regards,\n" +
+                        requisition.getLab().getName());
+
+        notificationProducerService.sendNotification(notification);
     }
 }

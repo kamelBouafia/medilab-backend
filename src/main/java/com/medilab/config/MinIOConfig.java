@@ -1,0 +1,56 @@
+package com.medilab.config;
+
+import io.minio.BucketExistsArgs;
+import io.minio.MakeBucketArgs;
+import io.minio.MinioClient;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@Slf4j
+public class MinIOConfig {
+
+    @Value("${minio.endpoint}")
+    private String endpoint;
+
+    @Value("${minio.access-key}")
+    private String accessKey;
+
+    @Value("${minio.secret-key}")
+    private String secretKey;
+
+    @Value("${minio.bucket-name}")
+    private String bucketName;
+
+    @Bean
+    public MinioClient minioClient() {
+        try {
+            MinioClient client = MinioClient.builder()
+                    .endpoint(endpoint)
+                    .credentials(accessKey, secretKey)
+                    .build();
+
+            // Create bucket if it doesn't exist
+            boolean bucketExists = client.bucketExists(
+                    BucketExistsArgs.builder()
+                            .bucket(bucketName)
+                            .build());
+
+            if (!bucketExists) {
+                client.makeBucket(
+                        MakeBucketArgs.builder()
+                                .bucket(bucketName)
+                                .build());
+                log.info("Created MinIO bucket: {}. Please configure 30-day lifecycle policy via MinIO console.",
+                        bucketName);
+            }
+
+            return client;
+        } catch (Exception e) {
+            log.error("Error initializing MinIO client", e);
+            throw new RuntimeException("Failed to initialize MinIO client", e);
+        }
+    }
+}

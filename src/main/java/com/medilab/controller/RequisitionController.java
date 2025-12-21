@@ -50,4 +50,16 @@ public class RequisitionController {
         RequisitionDto updatedRequisition = requisitionService.updateRequisitionStatus(requisitionId, requisitionDto);
         return ResponseEntity.ok(updatedRequisition);
     }
+
+    @GetMapping("/{id}/report")
+    public ResponseEntity<java.util.Map<String, String>> getReportUrl(@PathVariable Long id) {
+        String pdfUrl = requisitionService.getReportUrl(id);
+        return ResponseEntity.ok(java.util.Collections.singletonMap("url", pdfUrl));
+    }
+
+    @PostMapping("/{id}/resend-report")
+    public ResponseEntity<Void> resendReport(@PathVariable Long id) {
+        requisitionService.resendReport(id);
+        return ResponseEntity.ok().build();
+    }
 }

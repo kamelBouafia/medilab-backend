@@ -59,4 +59,10 @@ public class Requisition {
 
     @OneToMany(mappedBy = "requisition")
     private List<TestResult> testResults;
+
+    @Column(name = "pdf_object_path", length = 500)
+    private String pdfObjectPath;
+
+    @Column(name = "pdf_generated_at")
+    private LocalDateTime pdfGeneratedAt;
 }
