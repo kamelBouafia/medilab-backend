@@ -18,10 +18,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.Period; // Added
+import java.time.LocalDate; // Added
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import com.medilab.entity.LabTest; // Added
+import com.medilab.entity.Patient; // Added
+import com.medilab.entity.TestReferenceRange; // Added
+import com.medilab.enums.TestCategory; // Added
+import com.medilab.enums.TestResultFlag; // Added
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +43,7 @@ public class TestResultService {
     private final NotificationProducerService notificationProducerService;
     private final LabRepository labRepository;
     private final TestResultMapper testResultMapper;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public List<TestResultDto> saveTestResults(List<TestResultDto> testResultDtos) {
@@ -65,9 +73,22 @@ public class TestResultService {
                 staffUserRepository.findById(user.getId()).ifPresent(testResult::setEnteredBy);
             }
 
+            // Audit differences
+            if (testResult.getId() != null) {
+                if (!testResult.getResultValue().equals(dto.getResultValue())) {
+                    auditLogService.logAction("TEST_RESULT_UPDATED",
+                            "Test '" + testResult.getTest().getName() + "' result changed from '"
+                                    + testResult.getResultValue() + "' to '" + dto.getResultValue() + "'");
+                }
+            } else {
+                auditLogService.logAction("TEST_RESULT_ENTERED",
+                        "Test '" + testResult.getTest().getName() + "' result entered: " + dto.getResultValue());
+            }
+
             // Update values
             testResult.setResultValue(dto.getResultValue());
             testResult.setInterpretation(dto.getInterpretation());
+            testResult.setFlag(determineFlag(testResult.getTest(), dto.getResultValue(), requisition.getPatient()));
 
             return testResult;
         }).collect(Collectors.toList());
@@ -101,6 +122,11 @@ public class TestResultService {
             // Generate PDF
             byte[] pdfBytes = pdfReportService.generateReport(reportData);
 
+            // Delete existing PDF if present
+            if (requisition.getPdfObjectPath() != null) {
+                minIOService.deleteFile(requisition.getPdfObjectPath());
+            }
+
             // Upload to MinIO
             String fileName = "report_" + requisition.getId() + "_" + System.currentTimeMillis() + ".pdf";
             String objectPath = minIOService.uploadPdf(fileName, pdfBytes);
@@ -126,9 +152,11 @@ public class TestResultService {
         List<com.medilab.dto.ReportGenerationDto.TestResultDetail> testResults = requisition.getTestResults().stream()
                 .map(tr -> com.medilab.dto.ReportGenerationDto.TestResultDetail.builder()
                         .testName(tr.getTest().getName())
-                        .testCategory(tr.getTest().getCategory())
+                        .testCategory(tr.getTest().getCategory().name())
                         .resultValue(tr.getResultValue())
+                        .referenceRange(determineReferenceRange(tr.getTest(), requisition.getPatient()))
                         .interpretation(tr.getInterpretation())
+                        .flag(tr.getFlag() != null ? tr.getFlag().name() : null)
                         .build())
                 .collect(Collectors.toList());
 
@@ -170,5 +198,70 @@ public class TestResultService {
                         requisition.getLab().getName());
 
         notificationProducerService.sendNotification(notification);
+    }
+
+    private String determineReferenceRange(LabTest test, Patient patient) {
+        if (test.getReferenceRanges() == null || test.getReferenceRanges().isEmpty()) {
+            return "N/A";
+        }
+
+        int age = Period.between(patient.getDob(), LocalDate.now()).getYears();
+        Patient.Gender gender = patient.getGender();
+
+        return test.getReferenceRanges().stream()
+                .filter(range -> (range.getGender() == null || range.getGender().name().equals(gender.name())))
+                .filter(range -> (range.getMinAge() == null || age >= range.getMinAge()))
+                .filter(range -> (range.getMaxAge() == null || age <= range.getMaxAge()))
+                .findFirst()
+                .map(range -> {
+                    String unit = test.getUnit() != null ? " " + test.getUnit() : "";
+                    return range.getMinVal() + " - " + range.getMaxVal() + unit;
+                })
+                .orElse("N/A");
+    }
+
+    private TestResultFlag determineFlag(LabTest test, String resultValue, Patient patient) {
+        if (test.getReferenceRanges() == null || test.getReferenceRanges().isEmpty() || resultValue == null) {
+            return TestResultFlag.NORMAL; // or null if preferred
+        }
+
+        try {
+            double value = Double.parseDouble(resultValue);
+            int age = Period.between(patient.getDob(), LocalDate.now()).getYears();
+            Patient.Gender gender = patient.getGender();
+
+            return test.getReferenceRanges().stream()
+                    .filter(range -> (range.getGender() == null || range.getGender().name().equals(gender.name())))
+                    .filter(range -> (range.getMinAge() == null || age >= range.getMinAge()))
+                    .filter(range -> (range.getMaxAge() == null || age <= range.getMaxAge()))
+                    .findFirst()
+                    .map(range -> {
+                        // Check Critical
+                        if (range.getCriticalMax() != null && value > range.getCriticalMax())
+                            return TestResultFlag.CRITICAL_HIGH;
+                        if (range.getCriticalMin() != null && value < range.getCriticalMin())
+                            return TestResultFlag.CRITICAL_LOW;
+
+                        // Check Abnormal
+                        if (range.getAbnormalMax() != null && value > range.getAbnormalMax())
+                            return TestResultFlag.HIGH; // Using HIGH for abnormal max
+                        if (range.getAbnormalMin() != null && value < range.getAbnormalMin())
+                            return TestResultFlag.LOW; // Using LOW for abnormal min
+
+                        // Check Normal Range (Explicit High/Low if outside normal but inside
+                        // abnormal/critical boundaries or if abnormal not defined)
+                        if (range.getMaxVal() != null && value > range.getMaxVal())
+                            return TestResultFlag.HIGH;
+                        if (range.getMinVal() != null && value < range.getMinVal())
+                            return TestResultFlag.LOW;
+
+                        return TestResultFlag.NORMAL;
+                    })
+                    .orElse(TestResultFlag.NORMAL);
+
+        } catch (NumberFormatException e) {
+            // Not a number, cannot determine flag automatically
+            return TestResultFlag.NORMAL;
+        }
     }
 }

@@ -13,4 +13,6 @@ public interface LabTestRepository extends JpaRepository<LabTest, Long>, JpaSpec
     List<LabTest> findByLabId(Long labId);
 
     Optional<LabTest> findByIdAndLabId(Long id, Long labId);
+
+    Optional<LabTest> findByGlobalTestIdAndLabId(Long globalTestId, Long labId);
 }

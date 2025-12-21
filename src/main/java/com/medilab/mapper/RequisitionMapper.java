@@ -13,8 +13,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Mapper(componentModel = "spring", uses = {DateTimeMapper.class, LabTestMapper.class})
+import org.springframework.beans.factory.annotation.Autowired;
+
+@Mapper(componentModel = "spring", uses = { DateTimeMapper.class })
 public abstract class RequisitionMapper {
+
+    @Autowired
+    protected LabTestMapper labTestMapper;
 
     @Mapping(source = "patient.id", target = "patientId")
     @Mapping(source = "patient.name", target = "patientName")
@@ -37,7 +42,6 @@ public abstract class RequisitionMapper {
         }
 
         List<TestResult> results = requisition.getTestResults();
-        LabTestMapper labTestMapper = new LabTestMapperImpl();
 
         return requisition.getTests().stream().map(test -> {
             LabTestDto dto = labTestMapper.toDto(test);

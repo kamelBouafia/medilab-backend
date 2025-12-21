@@ -3,6 +3,7 @@ package com.medilab.service;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs; // Added
 import io.minio.http.Method;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -89,6 +90,25 @@ public class MinIOService {
         } catch (Exception e) {
             log.error("Error generating presigned URL", e);
             throw new RuntimeException("Failed to generate presigned URL", e);
+        }
+    }
+
+    /**
+     * Delete a file from MinIO
+     *
+     * @param objectName The object name in MinIO
+     */
+    public void deleteFile(String objectName) {
+        try {
+            minioClient.removeObject(
+                    RemoveObjectArgs.builder()
+                            .bucket(bucketName)
+                            .object(objectName)
+                            .build());
+            log.info("Deleted file from MinIO: {}", objectName);
+        } catch (Exception e) {
+            log.error("Error deleting file from MinIO: {}", objectName, e);
+            // We don't throw exception here to avoid failing the main transaction
         }
     }
 }

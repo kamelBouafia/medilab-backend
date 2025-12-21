@@ -11,4 +11,5 @@ public class DashboardStatsDto {
     private long pendingTests;
     private long completedToday;
     private long lowStockItems;
+    private java.util.List<DailyVolumeDto> weeklyVolume;
 }

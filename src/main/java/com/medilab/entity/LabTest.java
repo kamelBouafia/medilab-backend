@@ -7,6 +7,8 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import com.medilab.enums.TestCategory;
+import java.util.List;
 
 @Entity
 @Table(name = "lab_tests")
@@ -21,8 +23,26 @@ public class LabTest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private String category;
+
+    @Column(nullable = false)
+    private String code; // Unique per lab? or just internal code.
+
+    @Enumerated(EnumType.STRING)
+    private TestCategory category;
+
+    private String unit;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     private java.math.BigDecimal price;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "global_test_id")
+    private GlobalTestCatalog globalTest;
+
+    @OneToMany(mappedBy = "labTest", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TestReferenceRange> referenceRanges;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lab_id", nullable = false)

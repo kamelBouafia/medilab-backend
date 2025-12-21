@@ -32,15 +32,15 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USERNAME=guest
       - RABBITMQ_PASSWORD=guest
-      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Dliquibase.duplicateFileMode=WARN
       - LIQUIBASE_DUPLICATE_FILE_MODE=WARN
       - MINIO_ENDPOINT=http://minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET_NAME=medilab-reports
-    volumes:
-      - ./target/classes:/app/classes
-      - ./src/main/resources:/app/resources
+    # volumes:
+    #   - ./target/classes:/app/classes
+    #   - ./src/main/resources:/app/resources
     # DevTools will handle reactivation when these volumes are updated.
     depends_on:
       postgres:

@@ -25,7 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -64,7 +67,6 @@ public class RequisitionService {
             if (Long.class != query.getResultType() && long.class != query.getResultType()) {
                 root.fetch("patient", JoinType.LEFT);
                 root.fetch("createdBy", JoinType.LEFT);
-                root.fetch("tests", JoinType.LEFT);
                 // Note: testResults is NOT fetched here to avoid Cartesian product.
                 // The mapper will lazy-load testResults within the @Transactional context.
             }
@@ -103,6 +105,35 @@ public class RequisitionService {
                         break;
                     case "status":
                         predicates.add(root.get("status").in(values.stream().map(SampleStatus::valueOf).toList()));
+                        break;
+                    case "testId":
+                        // Filter by Test ID - requires joining tests
+                        if (values != null && !values.isEmpty()) {
+                            List<Long> testIds = values.stream().map(Long::valueOf).toList();
+                            predicates.add(root.join("tests").get("id").in(testIds));
+                        }
+                        break;
+                    case "fromDate":
+                        if (values.getFirst() != null) {
+                            try {
+                                LocalDate fromDate = LocalDate.parse(values.getFirst());
+                                predicates.add(cb.greaterThanOrEqualTo(root.get("date"),
+                                        fromDate.atStartOfDay().atOffset(java.time.ZoneOffset.UTC)));
+                            } catch (DateTimeParseException e) {
+                                // Ignore invalid date
+                            }
+                        }
+                        break;
+                    case "toDate":
+                        if (values.getFirst() != null) {
+                            try {
+                                LocalDate toDate = LocalDate.parse(values.getFirst());
+                                predicates.add(cb.lessThanOrEqualTo(root.get("date"),
+                                        toDate.atTime(LocalTime.MAX).atOffset(java.time.ZoneOffset.UTC)));
+                            } catch (DateTimeParseException e) {
+                                // Ignore invalid date
+                            }
+                        }
                         break;
                 }
             });

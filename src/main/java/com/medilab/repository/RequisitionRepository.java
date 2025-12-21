@@ -7,9 +7,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.medilab.dto.DailyVolumeDto;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -17,24 +17,34 @@ import java.util.Optional;
 
 @Repository
 public interface RequisitionRepository extends JpaRepository<Requisition, Long>, JpaSpecificationExecutor<Requisition> {
-    List<Requisition> findByLabId(Long labId);
-    List<Requisition> findByPatientIdAndLabId(Long patientId, Long labId);
+        List<Requisition> findByLabId(Long labId);
 
-    @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests LEFT JOIN FETCH r.testResults WHERE r.patient.id = :patientId AND r.lab.id = :labId")
-    Page<Requisition> findByPatientIdAndLabIdWithTestsAndResults(Long patientId, Long labId, Pageable pageable);
+        List<Requisition> findByPatientIdAndLabId(Long patientId, Long labId);
 
-    @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests WHERE r.patient.id = :patientId AND r.lab.id = :labId")
-    List<Requisition> findByPatientIdAndLabIdWithTests(Long patientId, Long labId);
+        @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests LEFT JOIN FETCH r.testResults WHERE r.patient.id = :patientId AND r.lab.id = :labId")
+        Page<Requisition> findByPatientIdAndLabIdWithTestsAndResults(Long patientId, Long labId, Pageable pageable);
 
-    @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests WHERE r.lab.id = :labId")
-    List<Requisition> findByLabIdWithTests(Long labId);
+        @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests WHERE r.patient.id = :patientId AND r.lab.id = :labId")
+        List<Requisition> findByPatientIdAndLabIdWithTests(Long patientId, Long labId);
 
-    @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests LEFT JOIN FETCH r.testResults WHERE r.id = :id AND r.lab.id = :labId")
-    Optional<Requisition> findByIdAndLabIdWithTestsAndResults(Long id, Long labId);
+        @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests WHERE r.lab.id = :labId")
+        List<Requisition> findByLabIdWithTests(Long labId);
 
-    long countByLabIdAndStatus(Long labId, SampleStatus status);
+        @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests LEFT JOIN FETCH r.testResults WHERE r.id = :id AND r.lab.id = :labId")
+        Optional<Requisition> findByIdAndLabIdWithTestsAndResults(Long id, Long labId);
 
-    long countByLabIdAndStatusIn(Long labId, Collection<SampleStatus> statuses);
+        long countByLabIdAndStatus(Long labId, SampleStatus status);
 
-    long countByLabIdAndStatusAndCompletionDateBetween(Long labId, SampleStatus status, LocalDateTime start, LocalDateTime end);
+        long countByLabIdAndStatusIn(Long labId, Collection<SampleStatus> statuses);
+
+        long countByLabIdAndStatusAndCompletionDateBetween(Long labId, SampleStatus status, LocalDateTime start,
+                        LocalDateTime end);
+
+        @Query("SELECT new com.medilab.dto.DailyVolumeDto(CAST(r.date AS LocalDate), COUNT(r)) " +
+                        "FROM Requisition r " +
+                        "WHERE r.lab.id = :labId AND r.date BETWEEN :start AND :end " +
+                        "GROUP BY CAST(r.date AS LocalDate) " +
+                        "ORDER BY CAST(r.date AS LocalDate) ASC")
+        List<DailyVolumeDto> findDailyRequestVolume(Long labId,
+                        java.time.OffsetDateTime start, java.time.OffsetDateTime end);
 }

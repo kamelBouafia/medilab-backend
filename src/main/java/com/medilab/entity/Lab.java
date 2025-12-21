@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class Lab {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,4 +38,8 @@ public class Lab {
 
     @Column(name = "trial_end")
     private LocalDateTime trialEnd;
+
+    @Column(name = "default_language", length = 5, nullable = false)
+    @Builder.Default
+    private String defaultLanguage = "en";
 }

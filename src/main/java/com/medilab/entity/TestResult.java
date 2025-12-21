@@ -7,6 +7,7 @@ import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import com.medilab.enums.TestResultFlag; // Added
 
 @Entity
 @Table(name = "test_results", uniqueConstraints = {
@@ -36,6 +37,9 @@ public class TestResult {
 
     @Column(columnDefinition = "TEXT")
     private String interpretation;
+
+    @Enumerated(EnumType.STRING)
+    private TestResultFlag flag;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "entered_by_id", nullable = false)

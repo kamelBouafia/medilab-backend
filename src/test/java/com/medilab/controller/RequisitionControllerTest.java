@@ -5,6 +5,7 @@ import com.medilab.dto.RequisitionDto;
 import com.medilab.entity.*;
 import com.medilab.repository.*;
 import com.medilab.security.AuthenticatedUser;
+import com.medilab.enums.TestCategory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -104,11 +105,11 @@ public class RequisitionControllerTest {
                                 .lab(lab).build());
 
                 LabTest test1 = labTestRepository
-                                .save(LabTest.builder().name("Blood Test").category("Hematology")
+                                .save(LabTest.builder().name("Blood Test").category(TestCategory.HEMATOLOGY)
                                                 .price(java.math.BigDecimal.valueOf(50.0)).lab(lab)
                                                 .build());
                 LabTest test2 = labTestRepository
-                                .save(LabTest.builder().name("Urine Test").category("Urology")
+                                .save(LabTest.builder().name("Urine Test").category(TestCategory.OTHER)
                                                 .price(java.math.BigDecimal.valueOf(40.0)).lab(lab)
                                                 .build());
 
@@ -189,7 +190,7 @@ public class RequisitionControllerTest {
         @Test
         void createRequisition_shouldCreateRequisition() throws Exception {
                 LabTest test = labTestRepository
-                                .save(LabTest.builder().name("X-Ray").category("Radiology")
+                                .save(LabTest.builder().name("X-Ray").category(TestCategory.OTHER)
                                                 .price(java.math.BigDecimal.valueOf(150.0)).lab(lab).build());
                 RequisitionDto newRequisitionDto = RequisitionDto.builder()
                                 .patientId(patient1.getId())

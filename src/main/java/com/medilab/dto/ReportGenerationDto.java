@@ -47,6 +47,8 @@ public class ReportGenerationDto {
         private String testName;
         private String testCategory;
         private String resultValue;
+        private String referenceRange;
         private String interpretation;
+        private String flag;
     }
 }

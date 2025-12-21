@@ -20,7 +20,7 @@ public class LabTestController {
 
     @GetMapping
     public ResponseEntity<Page<LabTestDto>> getLabTests(
-            @RequestParam(defaultValue = "0") int _page,
+            @RequestParam(defaultValue = "1") int _page,
             @RequestParam(defaultValue = "10") int _limit,
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "name") String _sort,
@@ -32,6 +32,13 @@ public class LabTestController {
     @PostMapping
     public ResponseEntity<LabTestDto> addLabTest(@Valid @RequestBody LabTestDto labTestDto) {
         return new ResponseEntity<>(labTestService.addLabTest(labTestDto), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<LabTestDto> importTest(
+            @RequestParam Long globalTestId,
+            @RequestParam java.math.BigDecimal price) {
+        return new ResponseEntity<>(labTestService.importTestFromGlobal(globalTestId, price), HttpStatus.CREATED);
     }
 
     @PutMapping("/{testId}")

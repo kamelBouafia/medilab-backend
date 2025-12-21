@@ -1,0 +1,12 @@
+package com.medilab.repository;
+
+import com.medilab.entity.TestReferenceRange;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface TestReferenceRangeRepository extends JpaRepository<TestReferenceRange, Long> {
+    List<TestReferenceRange> findByLabTestId(Long labTestId);
+}
