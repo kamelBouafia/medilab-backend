@@ -30,7 +30,7 @@ public class LabTestService {
     public Page<LabTestDto> getLabTests(int page, int limit, String q, String sort, String order) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Sort.Direction direction = Sort.Direction.fromString(order);
-        Pageable pageable = PageRequest.of(page, limit, Sort.by(direction, sort));
+        Pageable pageable = PageRequest.of(page - 1, limit, Sort.by(direction, sort));
 
         Specification<LabTest> spec = Specification
                 .where((root, query, cb) -> cb.equal(root.get("lab").get("id"), user.getLabId()));
