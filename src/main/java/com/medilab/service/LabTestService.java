@@ -13,16 +13,19 @@ import com.medilab.repository.LabTestRepository;
 import com.medilab.security.AuthenticatedUser;
 import com.medilab.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LabTestService {
@@ -33,13 +36,13 @@ public class LabTestService {
         private final AuditLogService auditLogService;
         private final GlobalTestCatalogRepository globalTestCatalogRepository;
 
+        @Transactional(readOnly = true)
         public Page<LabTestDto> getLabTests(int page, int limit, String q, String sort, String order) {
                 AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
                 Sort.Direction direction = Sort.Direction.fromString(order);
-                Pageable pageable = PageRequest.of(page - 1, limit, Sort.by(direction, sort));
+                Pageable pageable = PageRequest.of(Math.max(0, page - 1), limit, Sort.by(direction, sort));
 
-                Specification<LabTest> spec = Specification
-                                .where((root, query, cb) -> cb.equal(root.get("lab").get("id"), user.getLabId()));
+                Specification<LabTest> spec = (root, query, cb) -> cb.equal(root.get("lab").get("id"), user.getLabId());
 
                 if (StringUtils.hasText(q)) {
                         spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")),
@@ -49,49 +52,56 @@ public class LabTestService {
                 return labTestRepository.findAll(spec, pageable).map(labTestMapper::toDto);
         }
 
+        @Transactional
         public LabTestDto addLabTest(LabTestDto labTestDto) {
                 AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
                 LabTest labTest = labTestMapper.toEntity(labTestDto);
                 Lab lab = labRepository.findById(user.getLabId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Lab not found"));
                 labTest.setLab(lab);
+
+                if (labTest.getCode() == null) {
+                        labTest.setCode("CUSTOM-" + System.currentTimeMillis());
+                }
+
                 LabTest savedLabTest = labTestRepository.save(labTest);
+                log.info("Lab Test created: {} (ID: {})", savedLabTest.getName(), savedLabTest.getId());
                 auditLogService.logAction("LAB_TEST_CREATED",
                                 "Lab Test '" + savedLabTest.getName() + "' (ID: " + savedLabTest.getId()
                                                 + ") was created.");
                 return labTestMapper.toDto(savedLabTest);
         }
 
+        @Transactional
         public LabTestDto updateLabTest(Long testId, LabTestDto labTestDto) {
                 AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
                 LabTest existingLabTest = labTestRepository.findByIdAndLabId(testId, user.getLabId())
                                 .orElseThrow(() -> new ResourceNotFoundException("LabTest not found"));
-                existingLabTest.setName(labTestDto.getName());
-                existingLabTest.setCategory(labTestDto.getCategory());
 
-                existingLabTest.setPrice(labTestDto.getPrice());
-                existingLabTest.setUnit(labTestDto.getUnit());
-                existingLabTest.setMinVal(labTestDto.getMinVal());
-                existingLabTest.setMaxVal(labTestDto.getMaxVal());
-                existingLabTest.setCriticalMinVal(labTestDto.getCriticalMinVal());
-                existingLabTest.setCriticalMaxVal(labTestDto.getCriticalMaxVal());
+                labTestMapper.updateEntityFromDto(labTestDto, existingLabTest);
+
                 LabTest updatedLabTest = labTestRepository.save(existingLabTest);
+                log.info("Lab Test updated: {} (ID: {})", updatedLabTest.getName(), updatedLabTest.getId());
                 auditLogService.logAction("LAB_TEST_UPDATED",
                                 "Lab Test '" + updatedLabTest.getName() + "' (ID: " + updatedLabTest.getId()
                                                 + ") was updated.");
                 return labTestMapper.toDto(updatedLabTest);
         }
 
+        @Transactional
         public void deleteLabTest(Long testId) {
                 AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
                 LabTest existingLabTest = labTestRepository.findByIdAndLabId(testId, user.getLabId())
                                 .orElseThrow(() -> new ResourceNotFoundException("LabTest not found"));
-                labTestRepository.deleteById(testId);
+
+                labTestRepository.delete(existingLabTest);
+                log.info("Lab Test deleted: {} (ID: {})", existingLabTest.getName(), existingLabTest.getId());
                 auditLogService.logAction("LAB_TEST_DELETED",
                                 "Lab Test '" + existingLabTest.getName() + "' (ID: " + existingLabTest.getId()
                                                 + ") was deleted.");
         }
 
+        @Transactional
         public LabTestDto importTestFromGlobal(Long globalTestId, java.math.BigDecimal price) {
                 AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
                 GlobalTestCatalog globalTest = globalTestCatalogRepository.findById(globalTestId)
@@ -109,44 +119,30 @@ public class LabTestService {
                 labTest.setLab(lab);
                 labTest.setCode(globalTest.getCode());
                 labTest.setCategory(globalTest.getCategory());
-
-                // Map String unit from Global Catalog to Enum. Default to NONE if mismatch
-                try {
-                        String unitStr = globalTest.getDefaultUnit();
-                        TestUnit unit = (unitStr != null && !unitStr.isEmpty())
-                                        ? TestUnit.valueOf(unitStr.toUpperCase().replace("/", "_"))
-                                        : TestUnit.NONE;
-                        // Attempt a direct valueOf, if fail, fallback or Map.
-                        // Actually, let's try valueOf on exact match or common mappings if needed
-                        // For now assume global catalog uses same codes or map gracefully.
-                        // Simplest: Try lookup, else NONE.
-                        labTest.setUnit(resolveUnit(unitStr));
-                } catch (Exception e) {
-                        labTest.setUnit(TestUnit.NONE);
-                }
+                labTest.setUnit(resolveUnit(globalTest.getDefaultUnit()));
                 labTest.setDescription(globalTest.getDescription());
-
                 labTest.setPrice(price);
-                // Use Lab's default language, or fallback to "en", then to code
+
                 String lang = lab.getDefaultLanguage() != null ? lab.getDefaultLanguage() : "en";
-                String name = globalTest.getNames().get(lang);
-                if (name == null) {
-                        name = globalTest.getNames().getOrDefault("en", globalTest.getCode());
-                }
+                String name = globalTest.getNames().getOrDefault(lang,
+                                globalTest.getNames().getOrDefault("en", globalTest.getCode()));
                 labTest.setName(name);
-                labTest.setReferenceRanges(new ArrayList<>()); // Empty initially
+                labTest.setReferenceRanges(new ArrayList<>());
 
                 LabTest savedLabTest = labTestRepository.save(labTest);
+                log.info("Lab Test imported from global catalog: {} (ID: {})", savedLabTest.getName(),
+                                savedLabTest.getId());
                 auditLogService.logAction("LAB_TEST_IMPORTED",
                                 "Lab Test '" + savedLabTest.getName() + "' (ID: " + savedLabTest.getId()
-                                                + ") was imported from Global Catalog.");
+                                                + ") was imported.");
 
                 return labTestMapper.toDto(savedLabTest);
         }
 
         private TestUnit resolveUnit(String unitStr) {
-                if (unitStr == null || unitStr.trim().isEmpty())
+                if (!StringUtils.hasText(unitStr)) {
                         return TestUnit.NONE;
+                }
                 for (TestUnit u : TestUnit.values()) {
                         if (u.name().equalsIgnoreCase(unitStr) || u.getSymbol().equalsIgnoreCase(unitStr)) {
                                 return u;

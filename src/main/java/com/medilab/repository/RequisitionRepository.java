@@ -19,7 +19,9 @@ import java.util.Optional;
 public interface RequisitionRepository extends JpaRepository<Requisition, Long>, JpaSpecificationExecutor<Requisition> {
         List<Requisition> findByLabId(Long labId);
 
-        List<Requisition> findByPatientIdAndLabId(Long patientId, Long labId);
+        Optional<Requisition> findByPatientIdAndLabId(Long patientId, Long labId);
+
+        Optional<Requisition> findByIdAndLabId(Long id, Long labId);
 
         @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests LEFT JOIN FETCH r.testResults WHERE r.patient.id = :patientId AND r.lab.id = :labId")
         Page<Requisition> findByPatientIdAndLabIdWithTestsAndResults(Long patientId, Long labId, Pageable pageable);

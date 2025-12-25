@@ -1,36 +1,32 @@
 package com.medilab.service;
 
+import com.medilab.dto.NotificationRequestDTO;
+import com.medilab.dto.ReportGenerationDto;
 import com.medilab.dto.TestResultDto;
-import com.medilab.entity.Requisition;
-import com.medilab.entity.SampleStatus;
-import com.medilab.entity.TestResult;
+import com.medilab.entity.*;
+import com.medilab.enums.TestResultFlag;
 import com.medilab.exception.ResourceNotFoundException;
 import com.medilab.mapper.TestResultMapper;
-import com.medilab.repository.LabRepository;
-import com.medilab.repository.LabTestRepository;
-import com.medilab.repository.RequisitionRepository;
-import com.medilab.repository.StaffUserRepository;
-import com.medilab.repository.TestResultRepository;
+import com.medilab.repository.*;
 import com.medilab.security.AuthenticatedUser;
+import com.medilab.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period; 
-import java.time.LocalDate; 
+import java.time.Period;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import com.medilab.entity.LabTest; 
-import com.medilab.entity.Patient; 
-import com.medilab.enums.TestResultFlag; 
-import com.medilab.entity.Lab; 
-import com.medilab.entity.StaffUser; 
-import java.util.Set; 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TestResultService {
@@ -48,195 +44,163 @@ public class TestResultService {
 
     @Transactional
     public List<TestResultDto> saveTestResults(List<TestResultDto> testResultDtos) {
-        if (testResultDtos.isEmpty()) {
-            return List.of();
-        }
+        if (testResultDtos.isEmpty())
+            return Collections.emptyList();
 
-        AuthenticatedUser user = (AuthenticatedUser) SecurityContextHolder.getContext().getAuthentication()
-                .getPrincipal();
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Long requisitionId = testResultDtos.getFirst().getRequisitionId();
 
-        // Fetch all necessary data in bulk to avoid N+1 queries
         Requisition requisition = requisitionRepository.findById(requisitionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Requisition not found"));
-        
+
         Map<Long, TestResult> existingResultsMap = testResultRepository.findByRequisitionId(requisitionId).stream()
                 .collect(Collectors.toMap(tr -> tr.getTest().getId(), Function.identity()));
 
         Set<Long> testIds = testResultDtos.stream().map(TestResultDto::getTestId).collect(Collectors.toSet());
-        Map<Long, LabTest> labTestsMap = labTestRepository.findByIdInWithReferenceRanges(testIds).stream()
+        Map<Long, LabTest> labTestsMap = labTestRepository.findAllById(testIds).stream()
                 .collect(Collectors.toMap(LabTest::getId, Function.identity()));
 
-        Lab lab = labRepository.findById(user.getLabId()).orElseThrow(() -> new ResourceNotFoundException("Lab not found"));
-        StaffUser enteredBy = staffUserRepository.findById(user.getId()).orElseThrow(() -> new ResourceNotFoundException("StaffUser not found"));
+        Lab lab = labRepository.getReferenceById(user.getLabId());
+        StaffUser enteredBy = staffUserRepository.getReferenceById(user.getId());
 
+        List<TestResult> resultsToSave = testResultDtos.stream()
+                .map(dto -> processTestResult(dto, existingResultsMap, labTestsMap, requisition, lab, enteredBy))
+                .filter(Objects::nonNull)
+                .toList();
 
-        List<TestResult> resultsToSave = testResultDtos.stream().map(dto -> {
-            TestResult testResult = existingResultsMap.get(dto.getTestId());
-            LabTest labTest = labTestsMap.get(dto.getTestId());
+        List<TestResult> savedResults = testResultRepository.saveAll(resultsToSave);
 
-            if (labTest == null) {
-                // Or throw an exception, depending on desired behavior
-                return null; 
-            }
+        updateRequisitionStatusIfComplete(requisition, savedResults);
 
-            if (testResult == null) {
-                // This is a new result
-                testResult = new TestResult();
-                testResult.setRequisition(requisition);
-                testResult.setTest(labTest);
-                testResult.setLab(lab);
-                testResult.setEnteredBy(enteredBy);
-            }
+        return savedResults.stream().map(testResultMapper::toDto).toList();
+    }
 
-            // Audit differences
-            if (testResult.getId() != null) {
-                if (!testResult.getResultValue().equals(dto.getResultValue())) {
-                    auditLogService.logAction("TEST_RESULT_UPDATED",
-                            "Test '" + labTest.getName() + "' result changed from '"
-                                    + testResult.getResultValue() + "' to '" + dto.getResultValue() + "'");
-                }
-            } else {
-                auditLogService.logAction("TEST_RESULT_ENTERED",
-                        "Test '" + labTest.getName() + "' result entered: " + dto.getResultValue());
-            }
+    private TestResult processTestResult(TestResultDto dto, Map<Long, TestResult> existingMap,
+                                         Map<Long, LabTest> testMap, Requisition requisition,
+                                         Lab lab, StaffUser enteredBy) {
+        LabTest labTest = testMap.get(dto.getTestId());
+        if (labTest == null)
+            return null;
 
-            // Update values
-            testResult.setResultValue(dto.getResultValue());
-            testResult.setInterpretation(dto.getInterpretation());
+        TestResult testResult = existingMap.getOrDefault(dto.getTestId(), new TestResult());
 
-            // Allow manual override from FE
-            if (dto.getFlag() != null) {
-                testResult.setFlag(dto.getFlag());
-            } else {
-                testResult.setFlag(determineFlag(labTest, dto.getResultValue(), requisition.getPatient()));
-            }
+        if (testResult.getId() == null) {
+            testResult.setRequisition(requisition);
+            testResult.setTest(labTest);
+            testResult.setLab(lab);
+            testResult.setEnteredBy(enteredBy);
+            auditLogService.logAction("TEST_RESULT_ENTERED",
+                    String.format("Test '%s' result entered: %s", labTest.getName(), dto.getResultValue()));
+        } else if (!testResult.getResultValue().equals(dto.getResultValue())) {
+            auditLogService.logAction("TEST_RESULT_UPDATED", String.format("Test '%s' result changed from '%s' to '%s'",
+                    labTest.getName(), testResult.getResultValue(), dto.getResultValue()));
+        }
 
-            return testResult;
-        }).filter(java.util.Objects::nonNull) // Filter out nulls if a labTest wasn't found
-        .collect(Collectors.toList());
+        testResult.setResultValue(dto.getResultValue());
+        testResult.setInterpretation(dto.getInterpretation());
+        testResult.setFlag(dto.getFlag() != null ? dto.getFlag()
+                : determineFlag(labTest, dto.getResultValue(), requisition.getPatient()));
 
-        // Use a batch save operation
-        List<TestResult> savedTestResults = testResultRepository.saveAll(resultsToSave);
+        return testResult;
+    }
 
-        // Check if all tests for this requisition now have results
+    private void updateRequisitionStatusIfComplete(Requisition requisition, List<TestResult> savedResults) {
         long totalTests = requisition.getTests().size();
-        long completedTests = testResultRepository.countByRequisitionId(requisitionId);
+        long completedTests = testResultRepository.countByRequisitionId(requisition.getId());
 
         if (totalTests == completedTests) {
-            // All tests are complete, update status and generate PDF
             requisition.setStatus(SampleStatus.COMPLETED);
             requisition.setCompletionDate(LocalDateTime.now());
             requisitionRepository.save(requisition);
-
-            // Generate and upload PDF report
-            generateAndUploadPdfReport(requisition);
+            log.info("Requisition {} completed. Generating PDF report.", requisition.getId());
+            generateAndUploadPdfReport(requisition, savedResults);
         }
-
-        return savedTestResults.stream()
-                .map(testResultMapper::toDto)
-                .collect(Collectors.toList());
     }
 
-    private void generateAndUploadPdfReport(Requisition requisition) {
+    private void generateAndUploadPdfReport(Requisition requisition, List<TestResult> savedResults) {
         try {
-            // Build report data
-            com.medilab.dto.ReportGenerationDto reportData = buildReportData(requisition);
-
-            // Generate PDF
+            ReportGenerationDto reportData = buildReportData(requisition, savedResults);
             byte[] pdfBytes = pdfReportService.generateReport(reportData);
 
-            // Delete existing PDF if present
-            // We need the bucket name. Assuming standardized naming: lab-{id}-reports
             String bucketName = "lab-" + requisition.getLab().getId() + "-reports";
-
             if (requisition.getPdfObjectPath() != null) {
                 minIOService.deleteFile(bucketName, requisition.getPdfObjectPath());
             }
 
-            // Upload to MinIO
-            String fileName = "report_" + requisition.getId() + "_" + System.currentTimeMillis() + ".pdf";
+            String fileName = String.format("report_%d_%d.pdf", requisition.getId(), System.currentTimeMillis());
             String objectPath = minIOService.uploadPdf(bucketName, fileName, pdfBytes);
 
-            // Store object path in requisition (not the presigned URL)
             requisition.setPdfObjectPath(objectPath);
             requisition.setPdfGeneratedAt(LocalDateTime.now());
             requisitionRepository.save(requisition);
 
-            // Generate presigned URL for email notification
             String pdfUrl = minIOService.getPresignedUrl(bucketName, objectPath);
-
-            // Send email notification
             sendReportNotification(requisition, pdfUrl);
         } catch (Exception e) {
-            // Log error but don't fail the transaction
-            System.err.println("Error generating PDF report: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Error generating PDF report for Requisition ID: {}", requisition.getId(), e);
         }
     }
 
-    private com.medilab.dto.ReportGenerationDto buildReportData(Requisition requisition) {
-        List<com.medilab.dto.ReportGenerationDto.TestResultDetail> testResults = requisition.getTestResults().stream()
-                .map(tr -> com.medilab.dto.ReportGenerationDto.TestResultDetail.builder()
-                        .testName(tr.getTest().getName())
-                        .testCategory(tr.getTest().getCategory().name())
-                        .resultValue(tr.getResultValue())
-                        .referenceRange(determineReferenceRange(tr.getTest(), requisition.getPatient()))
-                        .interpretation(tr.getInterpretation())
-                        .flag(tr.getFlag() != null ? tr.getFlag().name() : null)
-                        .build())
-                .collect(Collectors.toList());
+    private ReportGenerationDto buildReportData(Requisition requisition, List<TestResult> savedResults) {
+        List<ReportGenerationDto.TestResultDetail> details = savedResults.stream()
+                .map(tr -> {
+                    String referenceRange = determineReferenceRange(tr.getTest(), requisition.getPatient());
+                    return ReportGenerationDto.TestResultDetail.builder()
+                            .testName(tr.getTest().getName())
+                            .testCategory(tr.getTest().getCategory().name())
+                            .resultValue(tr.getResultValue())
+                            .referenceRange(referenceRange)
+                            .interpretation(tr.getInterpretation())
+                            .flag(tr.getFlag() != null ? tr.getFlag().name() : null)
+                            .build();
+                })
+                .toList();
 
-        return com.medilab.dto.ReportGenerationDto.builder()
-                .labName(requisition.getLab().getName())
-                .labLocation(requisition.getLab().getLocation())
-                .labContactEmail(requisition.getLab().getContactEmail())
-                .labLicenseNumber(requisition.getLab().getLicenseNumber())
-                .patientName(requisition.getPatient().getName())
-                .patientDob(requisition.getPatient().getDob())
-                .patientGender(requisition.getPatient().getGender().name())
-                .patientPhone(requisition.getPatient().getPhone())
-                .patientEmail(requisition.getPatient().getEmail())
-                .patientAddress(requisition.getPatient().getAddress())
-                .patientBloodGroup(requisition.getPatient().getBloodGroup())
-                .patientAllergies(requisition.getPatient().getAllergies())
+        Patient p = requisition.getPatient();
+        Lab l = requisition.getLab();
+
+        return ReportGenerationDto.builder()
+                .labName(l.getName())
+                .labLocation(l.getLocation())
+                .labContactEmail(l.getContactEmail())
+                .labLicenseNumber(l.getLicenseNumber())
+                .patientName(p.getName())
+                .patientDob(p.getDob())
+                .patientGender(p.getGender().name())
+                .patientPhone(p.getPhone())
+                .patientEmail(p.getEmail())
+                .patientAddress(p.getAddress())
+                .patientBloodGroup(p.getBloodGroup())
+                .patientAllergies(p.getAllergies())
                 .requisitionId(requisition.getId())
                 .doctorName(requisition.getDoctorName())
                 .requisitionDate(requisition.getDate().toLocalDateTime())
                 .completionDate(requisition.getCompletionDate())
-                .testResults(testResults)
+                .testResults(details)
                 .build();
     }
 
     private void sendReportNotification(Requisition requisition, String pdfUrl) {
-        com.medilab.dto.NotificationRequestDTO notification = new com.medilab.dto.NotificationRequestDTO();
+        NotificationRequestDTO notification = new NotificationRequestDTO();
         notification.setType("EMAIL");
         notification.setRecipient(requisition.getPatient().getEmail());
         notification.setSubject("Your Medical Test Results are Ready");
-        notification.setContent(
-                "Dear " + requisition.getPatient().getName() + ",\n\n" +
-                        "Your medical test results for requisition #" + requisition.getId() + " are now ready.\n\n" +
-                        "You can download your report using the link below:\n" +
-                        pdfUrl + "\n\n" +
-                        "Please note: This link will expire in 7 days. The report will be available for 30 days.\n\n" +
-                        "If you have any questions about your results, please consult with your healthcare provider.\n\n"
-                        +
-                        "Best regards,\n" +
-                        requisition.getLab().getName());
+        notification.setContent(String.format(
+                "Dear %s,\n\nYour medical test results for requisition #%d are now ready.\n\nDownload link:\n%s\n\nBest regards,\n%s",
+                requisition.getPatient().getName(), requisition.getId(), pdfUrl, requisition.getLab().getName()));
 
         notificationProducerService.sendNotification(notification);
     }
 
     private String determineReferenceRange(LabTest test, Patient patient) {
-        // Priority 1: Simple Min/Max on LabTest
+        String unit = test.getUnit() != null ? " " + test.getUnit().getSymbol() : "";
+
         if (test.getMinVal() != null || test.getMaxVal() != null) {
-            String unit = test.getUnit() != null ? " " + test.getUnit().getSymbol() : ""; // Use getSymbol() for Enum
-            String min = test.getMinVal() != null ? String.valueOf(test.getMinVal()) : "?";
-            String max = test.getMaxVal() != null ? String.valueOf(test.getMaxVal()) : "?";
-            return min + " - " + max + unit;
+            return String.format("Normal: %s - %s%s",
+                    test.getMinVal() != null ? test.getMinVal() : "N/A",
+                    test.getMaxVal() != null ? test.getMaxVal() : "N/A", unit);
         }
 
-        // Priority 2: Legacy Reference Ranges
         if (test.getReferenceRanges() == null || test.getReferenceRanges().isEmpty()) {
             return "N/A";
         }
@@ -245,13 +209,30 @@ public class TestResultService {
         Patient.Gender gender = patient.getGender();
 
         return test.getReferenceRanges().stream()
-                .filter(range -> (range.getGender() == null || range.getGender().name().equals(gender.name())))
-                .filter(range -> (range.getMinAge() == null || age >= range.getMinAge()))
-                .filter(range -> (range.getMaxAge() == null || age <= range.getMaxAge()))
+                .filter(r -> (r.getGender() == null || r.getGender().name().equals(gender.name())))
+                .filter(r -> (r.getMinAge() == null || age >= r.getMinAge()))
+                .filter(r -> (r.getMaxAge() == null || age <= r.getMaxAge()))
                 .findFirst()
-                .map(range -> {
-                    String unit = test.getUnit() != null ? " " + test.getUnit() : "";
-                    return range.getMinVal() + " - " + range.getMaxVal() + unit;
+                .map(r -> {
+                    StringBuilder sb = new StringBuilder();
+                    if (r.getMinVal() != null || r.getMaxVal() != null) {
+                        sb.append(String.format("Normal: %s - %s%s",
+                                r.getMinVal() != null ? r.getMinVal() : "N/A",
+                                r.getMaxVal() != null ? r.getMaxVal() : "N/A", unit));
+                    }
+                    if (r.getAbnormalMin() != null || r.getAbnormalMax() != null) {
+                        if (sb.length() > 0) sb.append("\n");
+                        sb.append(String.format("Abnormal: <%s or >%s%s",
+                                r.getAbnormalMin() != null ? r.getAbnormalMin() : "N/A",
+                                r.getAbnormalMax() != null ? r.getAbnormalMax() : "N/A", unit));
+                    }
+                    if (r.getCriticalMin() != null || r.getCriticalMax() != null) {
+                        if (sb.length() > 0) sb.append("\n");
+                        sb.append(String.format("Critical: <%s or >%s%s",
+                                r.getCriticalMin() != null ? r.getCriticalMin() : "N/A",
+                                r.getCriticalMax() != null ? r.getCriticalMax() : "N/A", unit));
+                    }
+                    return sb.length() > 0 ? sb.toString() : "N/A";
                 })
                 .orElse("N/A");
     }
@@ -263,7 +244,6 @@ public class TestResultService {
         try {
             double value = Double.parseDouble(resultValue);
 
-            // Priority 1: Simple Min/Max on LabTest
             if (test.getMinVal() != null || test.getMaxVal() != null) {
                 if (test.getMaxVal() != null && value > test.getMaxVal())
                     return TestResultFlag.HIGH;
@@ -272,45 +252,34 @@ public class TestResultService {
                 return TestResultFlag.NORMAL;
             }
 
-            // Priority 2: Legacy Reference Ranges
-            if (test.getReferenceRanges() == null || test.getReferenceRanges().isEmpty()) {
-                return TestResultFlag.NORMAL; // or null
-            }
+            if (test.getReferenceRanges() == null || test.getReferenceRanges().isEmpty())
+                return TestResultFlag.NORMAL;
 
             int age = Period.between(patient.getDob(), LocalDate.now()).getYears();
             Patient.Gender gender = patient.getGender();
 
             return test.getReferenceRanges().stream()
-                    .filter(range -> (range.getGender() == null || range.getGender().name().equals(gender.name())))
-                    .filter(range -> (range.getMinAge() == null || age >= range.getMinAge()))
-                    .filter(range -> (range.getMaxAge() == null || age <= range.getMaxAge()))
+                    .filter(r -> (r.getGender() == null || r.getGender().name().equals(gender.name())))
+                    .filter(r -> (r.getMinAge() == null || age >= r.getMinAge()))
+                    .filter(r -> (r.getMaxAge() == null || age <= r.getMaxAge()))
                     .findFirst()
-                    .map(range -> {
-                        // Check Critical
-                        if (range.getCriticalMax() != null && value > range.getCriticalMax())
+                    .map(r -> {
+                        if (r.getCriticalMax() != null && value > r.getCriticalMax())
                             return TestResultFlag.CRITICAL_HIGH;
-                        if (range.getCriticalMin() != null && value < range.getCriticalMin())
+                        if (r.getCriticalMin() != null && value < r.getCriticalMin())
                             return TestResultFlag.CRITICAL_LOW;
-
-                        // Check Abnormal
-                        if (range.getAbnormalMax() != null && value > range.getAbnormalMax())
-                            return TestResultFlag.HIGH; // Using HIGH for abnormal max
-                        if (range.getAbnormalMin() != null && value < range.getAbnormalMin())
-                            return TestResultFlag.LOW; // Using LOW for abnormal min
-
-                        // Check Normal Range (Explicit High/Low if outside normal but inside
-                        // abnormal/critical boundaries or if abnormal not defined)
-                        if (range.getMaxVal() != null && value > range.getMaxVal())
+                        if (r.getAbnormalMax() != null && value > r.getAbnormalMax())
                             return TestResultFlag.HIGH;
-                        if (range.getMinVal() != null && value < range.getMinVal())
+                        if (r.getAbnormalMin() != null && value < r.getAbnormalMin())
                             return TestResultFlag.LOW;
-
+        if (r.getMaxVal() != null && value > r.getMaxVal())
+                            return TestResultFlag.HIGH;
+                        if (r.getMinVal() != null && value < r.getMinVal())
+                            return TestResultFlag.LOW;
                         return TestResultFlag.NORMAL;
                     })
                     .orElse(TestResultFlag.NORMAL);
-
         } catch (NumberFormatException e) {
-            // Not a number, cannot determine flag automatically
             return TestResultFlag.NORMAL;
         }
     }

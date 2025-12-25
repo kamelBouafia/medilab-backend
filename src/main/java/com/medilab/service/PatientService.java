@@ -8,16 +8,21 @@ import com.medilab.repository.PatientRepository;
 import com.medilab.repository.StaffUserRepository;
 import com.medilab.repository.LabRepository;
 import com.medilab.security.AuthenticatedUser;
+import com.medilab.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import com.medilab.security.SecurityUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.UUID;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PatientService {
@@ -29,85 +34,78 @@ public class PatientService {
     private final AuditLogService auditLogService;
     private final TrialService trialService;
 
+    @Transactional(readOnly = true)
     public Page<PatientDto> getPatients(int page, int limit, String q, String sort, String order) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Sort.Direction direction = Sort.Direction.fromString(order);
-        Pageable pageable = PageRequest.of(page > 0 ? page - 1 : 0, limit, Sort.by(direction, sort));
+        Pageable pageable = PageRequest.of(Math.max(0, page - 1), limit, Sort.by(direction, sort));
 
-        Specification<Patient> spec = Specification
-                .where((root, query, cb) -> cb.equal(root.get("lab").get("id"), user.getLabId()));
+        Specification<Patient> spec = (root, query, cb) -> cb.equal(root.get("lab").get("id"), user.getLabId());
 
         if (StringUtils.hasText(q)) {
+            String search = "%" + q.toLowerCase() + "%";
             spec = spec.and((root, query, cb) -> cb.or(
-                    cb.like(cb.lower(root.get("name")), "%" + q.toLowerCase() + "%"),
-                    cb.like(cb.lower(root.get("contact")), "%" + q.toLowerCase() + "%"),
-                    cb.like(cb.lower(root.get("username")), "%" + q.toLowerCase() + "%")));
+                    cb.like(cb.lower(root.get("name")), search),
+                    cb.like(cb.lower(root.get("phone")), search), // Changed from contact to phone
+                    cb.like(cb.lower(root.get("username")), search)));
         }
 
         return patientRepository.findAll(spec, pageable).map(patientMapper::toDto);
     }
 
+    @Transactional
     public PatientDto createPatient(PatientDto patientDto) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+
+        labRepository.findById(user.getLabId()).ifPresent(trialService::assertTrialActive);
+
         Patient patient = patientMapper.toEntity(patientDto);
+        patient.setLab(labRepository.getReferenceById(user.getLabId()));
+        patient.setCreatedBy(staffUserRepository.getReferenceById(user.getId()));
 
-        labRepository.findById(user.getLabId()).ifPresent(patient::setLab);
-        staffUserRepository.findById(user.getId()).ifPresent(patient::setCreatedBy);
-
-        // Check trial status for the lab before creating a patient
-        labRepository.findById(user.getLabId()).ifPresent(lab -> trialService.assertTrialActive(lab));
-
-        // Ensure username exists -- use email or phone as default
         if (!StringUtils.hasText(patient.getUsername())) {
-            generateUniqueUsername(patient);
+            patient.setUsername(generateUniqueUsername(patient));
         }
 
         Patient savedPatient = patientRepository.save(patient);
+        log.info("Patient created: {} (ID: {})", savedPatient.getName(), savedPatient.getId());
         auditLogService.logAction("PATIENT_CREATED",
                 "Patient '" + savedPatient.getName() + "' (ID: " + savedPatient.getId() + ") was created.");
         return patientMapper.toDto(savedPatient);
     }
 
-    private void generateUniqueUsername(Patient patient) {
-        String base;
-        if (StringUtils.hasText(patient.getEmail()))
-            base = patient.getEmail();
-        else if (StringUtils.hasText(patient.getPhone()))
-            base = patient.getPhone();
-        else {
-            // fallback to name + timestamp
-            base = patient.getName().replaceAll("\\s+", "").toLowerCase();
-            if (!StringUtils.hasText(base))
-                base = "patient";
+    private String generateUniqueUsername(Patient patient) {
+        String base = StringUtils.hasText(patient.getEmail()) ? patient.getEmail()
+                : (StringUtils.hasText(patient.getPhone()) ? patient.getPhone()
+                        : patient.getName().replaceAll("\\s+", "").toLowerCase());
+
+        if (!StringUtils.hasText(base))
+            base = "patient";
+
+        if (patientRepository.findByUsername(base).isEmpty()) {
+            return base;
         }
 
-        // Try exact match first if it looks like a username (email/phone)
-        if (!patientRepository.findByUsername(base).isPresent()) {
-            patient.setUsername(base);
-            return;
-        }
-
-        // If taken, append logic
-        String candidate = base;
-        int maxAttempts = 10;
-        for (int i = 0; i < maxAttempts; i++) {
-            candidate = base + (System.currentTimeMillis() % 10000) + (i > 0 ? "_" + i : "");
-            if (!patientRepository.findByUsername(candidate).isPresent()) {
-                patient.setUsername(candidate);
-                return;
+        // Try with append
+        for (int i = 1; i <= 5; i++) {
+            String candidate = base + "_" + (System.currentTimeMillis() % 1000);
+            if (patientRepository.findByUsername(candidate).isEmpty()) {
+                return candidate;
             }
         }
-        // Fallback to UUID if all else fails to guarantee uniqueness
-        patient.setUsername(base + "_" + java.util.UUID.randomUUID().toString().substring(0, 8));
+
+        return base + "_" + UUID.randomUUID().toString().substring(0, 8);
     }
 
+    @Transactional(readOnly = true)
     public PatientDto getPatientById(Long patientId) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
-        Patient patient = patientRepository.findByIdAndLabId(patientId, user.getLabId())
+        return patientRepository.findByIdAndLabId(patientId, user.getLabId())
+                .map(patientMapper::toDto)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
-        return patientMapper.toDto(patient);
     }
 
+    @Transactional
     public PatientDto updatePatient(Long patientId, PatientDto patientDto) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Patient existingPatient = patientRepository.findByIdAndLabId(patientId, user.getLabId())
@@ -116,17 +114,20 @@ public class PatientService {
         patientMapper.updatePatientFromDto(patientDto, existingPatient);
 
         Patient updatedPatient = patientRepository.save(existingPatient);
+        log.info("Patient updated: {} (ID: {})", updatedPatient.getName(), updatedPatient.getId());
         auditLogService.logAction("PATIENT_UPDATED",
                 "Patient '" + updatedPatient.getName() + "' (ID: " + updatedPatient.getId() + ") was updated.");
         return patientMapper.toDto(updatedPatient);
     }
 
+    @Transactional
     public void deletePatient(Long patientId) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
         Patient existingPatient = patientRepository.findByIdAndLabId(patientId, user.getLabId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
 
         patientRepository.delete(existingPatient);
+        log.info("Patient deleted: {} (ID: {})", existingPatient.getName(), existingPatient.getId());
         auditLogService.logAction("PATIENT_DELETED",
                 "Patient '" + existingPatient.getName() + "' (ID: " + existingPatient.getId() + ") was deleted.");
     }

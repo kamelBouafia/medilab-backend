@@ -22,11 +22,9 @@ public class TestResultController {
     private final AuditLogService auditLogService;
 
     @PostMapping
-    public ResponseEntity<?> saveTestResults(@Valid @RequestBody List<TestResultDto> testResultDtos) {
-        testResultService.saveTestResults(testResultDtos);
-
+    public ResponseEntity<List<TestResultDto>> saveTestResults(@Valid @RequestBody List<TestResultDto> testResultDtos) {
+        List<TestResultDto> savedResults = testResultService.saveTestResults(testResultDtos);
         auditLogService.logAction("ENTER_RESULTS", "Entered " + testResultDtos.size() + " test results");
-
-        return new ResponseEntity<>(java.util.Map.of("message", "Results saved successfully"), HttpStatus.CREATED);
+        return new ResponseEntity<>(savedResults, HttpStatus.CREATED);
     }
 }
