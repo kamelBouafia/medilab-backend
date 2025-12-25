@@ -6,6 +6,9 @@ databaseChangeLog:
       file: changes/02-data.sql
       relativeToChangelogFile: true
   - include:
+      file: changes/03-add-lab-test-fields.sql
+      relativeToChangelogFile: true
+  - include:
       file: changes/03-add-pdf-fields.sql
       relativeToChangelogFile: true
   - include:
@@ -22,4 +25,7 @@ databaseChangeLog:
       relativeToChangelogFile: true
   - include:
       file: changes/08-add-lab-language.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/09-add-critical-thresholds.sql
       relativeToChangelogFile: true

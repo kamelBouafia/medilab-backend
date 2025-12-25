@@ -25,14 +25,24 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Collections;
 import java.util.Optional;
+import com.medilab.entity.TestResult;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import com.medilab.entity.LabTest;
+import com.medilab.entity.Patient;
+import com.medilab.enums.TestResultFlag;
 
 @Service
 @RequiredArgsConstructor
@@ -202,7 +212,8 @@ public class RequisitionService {
         }
 
         // Generate presigned URL on-demand from stored object path
-        return minIOService.getPresignedUrl(requisition.getPdfObjectPath());
+        String bucketName = "lab-" + requisition.getLab().getId() + "-reports";
+        return minIOService.getPresignedUrl(bucketName, requisition.getPdfObjectPath());
     }
 
     @Transactional
@@ -217,7 +228,8 @@ public class RequisitionService {
         }
 
         // Generate fresh presigned URL for the email
-        String pdfUrl = minIOService.getPresignedUrl(requisition.getPdfObjectPath());
+        String bucketName = "lab-" + requisition.getLab().getId() + "-reports";
+        String pdfUrl = minIOService.getPresignedUrl(bucketName, requisition.getPdfObjectPath());
 
         // Send notification email with PDF link
         com.medilab.dto.NotificationRequestDTO notification = new com.medilab.dto.NotificationRequestDTO();
@@ -237,5 +249,55 @@ public class RequisitionService {
                         requisition.getLab().getName());
 
         notificationProducerService.sendNotification(notification);
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.medilab.dto.TestResultDto> getRequisitionResults(Long requisitionId) {
+        Requisition requisition = requisitionRepository.findById(requisitionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Requisition not found"));
+
+        // Get all tests for this requisition
+        Set<com.medilab.entity.LabTest> tests = requisition.getTests();
+        if (tests == null) {
+            return Collections.emptyList();
+        }
+
+        List<TestResult> results = requisition.getTestResults();
+
+        // Create DTOs for all tests, with or without results
+        return tests.stream()
+                .map(test -> {
+                    com.medilab.dto.TestResultDto dto = new com.medilab.dto.TestResultDto();
+
+                    // Test metadata
+                    dto.setTestId(test.getId());
+                    dto.setTestName(test.getName());
+                    dto.setTestCategory(test.getCategory().name());
+                    dto.setTestPrice(test.getPrice().doubleValue());
+                    dto.setTestUnit(test.getUnit() != null ? test.getUnit().name() : null);
+                    dto.setTestMinVal(test.getMinVal());
+                    dto.setTestMaxVal(test.getMaxVal());
+                    dto.setTestCriticalMinVal(test.getCriticalMinVal());
+                    dto.setTestCriticalMaxVal(test.getCriticalMaxVal());
+                    dto.setRequisitionId(requisitionId);
+
+                    // Find matching result if exists
+                    if (results != null) {
+                        results.stream()
+                                .filter(result -> result.getTest().getId().equals(test.getId()))
+                                .findFirst()
+                                .ifPresent(result -> {
+                                    dto.setId(result.getId());
+                                    dto.setResultValue(result.getResultValue());
+                                    dto.setInterpretation(result.getInterpretation());
+                                    dto.setFlag(result.getFlag());
+                                    dto.setEnteredById(
+                                            result.getEnteredBy() != null ? result.getEnteredBy().getId() : null);
+                                });
+                    }
+
+                    return dto;
+                })
+                .collect(java.util.stream.Collectors.toList());
     }
 }

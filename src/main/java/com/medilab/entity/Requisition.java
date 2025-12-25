@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -53,7 +55,8 @@ public class Requisition {
     @JoinColumn(name = "lab_id", nullable = false)
     private Lab lab;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
+//    @Fetch(FetchMode.JOIN)
     @JoinTable(name = "requisition_tests", joinColumns = @JoinColumn(name = "requisition_id"), inverseJoinColumns = @JoinColumn(name = "test_id"))
     private Set<LabTest> tests;
 

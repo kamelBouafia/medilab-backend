@@ -20,8 +20,9 @@ public class MinIOService {
 
     private final MinioClient minioClient;
 
+    // Default bucket name from config, can be overridden
     @Value("${minio.bucket-name}")
-    private String bucketName;
+    private String defaultBucketName;
 
     @Value("${minio.url-expiry-hours:168}")
     private int urlExpiryHours;
@@ -42,19 +43,30 @@ public class MinIOService {
      * @param pdfBytes The PDF content as bytes
      * @return The object name in MinIO
      */
-    public String uploadPdf(String fileName, byte[] pdfBytes) {
+    public String uploadPdf(String bucketName, String fileName, byte[] pdfBytes) {
         try {
+            // Use provided bucket or default
+            String targetBucket = (bucketName != null && !bucketName.isEmpty()) ? bucketName : defaultBucketName;
             String objectName = "reports/" + fileName;
+
+            // Ensure bucket exists
+            boolean bucketExists = minioClient.bucketExists(
+                    io.minio.BucketExistsArgs.builder().bucket(targetBucket).build());
+            if (!bucketExists) {
+                minioClient.makeBucket(
+                        io.minio.MakeBucketArgs.builder().bucket(targetBucket).build());
+                log.info("Created new MinIO bucket: {}", targetBucket);
+            }
 
             minioClient.putObject(
                     PutObjectArgs.builder()
-                            .bucket(bucketName)
+                            .bucket(targetBucket)
                             .object(objectName)
                             .stream(new ByteArrayInputStream(pdfBytes), pdfBytes.length, -1)
                             .contentType("application/pdf")
                             .build());
 
-            log.info("Uploaded PDF to MinIO: {}", objectName);
+            log.info("Uploaded PDF to MinIO bucket {}: {}", targetBucket, objectName);
             return objectName;
         } catch (Exception e) {
             log.error("Error uploading PDF to MinIO", e);
@@ -69,18 +81,21 @@ public class MinIOService {
      * @param objectName The object name in MinIO
      * @return The presigned URL valid for configured hours
      */
-    public String getPresignedUrl(String objectName) {
+    public String getPresignedUrl(String bucketName, String objectName) {
         try {
+            String targetBucket = (bucketName != null && !bucketName.isEmpty()) ? bucketName : defaultBucketName;
+
             // Create a separate client with public endpoint for URL generation
             MinioClient publicClient = MinioClient.builder()
                     .endpoint(publicEndpoint)
                     .credentials(accessKey, secretKey)
+                    .region("us-east-1")
                     .build();
 
             String url = publicClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
-                            .bucket(bucketName)
+                            .bucket(targetBucket)
                             .object(objectName)
                             .expiry(urlExpiryHours, TimeUnit.HOURS)
                             .build());
@@ -98,14 +113,16 @@ public class MinIOService {
      *
      * @param objectName The object name in MinIO
      */
-    public void deleteFile(String objectName) {
+    public void deleteFile(String bucketName, String objectName) {
         try {
+            String targetBucket = (bucketName != null && !bucketName.isEmpty()) ? bucketName : defaultBucketName;
+
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
-                            .bucket(bucketName)
+                            .bucket(targetBucket)
                             .object(objectName)
                             .build());
-            log.info("Deleted file from MinIO: {}", objectName);
+            log.info("Deleted file from MinIO bucket {}: {}", targetBucket, objectName);
         } catch (Exception e) {
             log.error("Error deleting file from MinIO: {}", objectName, e);
             // We don't throw exception here to avoid failing the main transaction

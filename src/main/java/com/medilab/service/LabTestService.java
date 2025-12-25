@@ -4,6 +4,7 @@ import com.medilab.dto.LabTestDto;
 import com.medilab.entity.GlobalTestCatalog;
 import com.medilab.entity.Lab;
 import com.medilab.entity.LabTest;
+import com.medilab.enums.TestUnit;
 import com.medilab.exception.ResourceNotFoundException;
 import com.medilab.mapper.LabTestMapper;
 import com.medilab.repository.GlobalTestCatalogRepository;
@@ -67,7 +68,13 @@ public class LabTestService {
                                 .orElseThrow(() -> new ResourceNotFoundException("LabTest not found"));
                 existingLabTest.setName(labTestDto.getName());
                 existingLabTest.setCategory(labTestDto.getCategory());
+
                 existingLabTest.setPrice(labTestDto.getPrice());
+                existingLabTest.setUnit(labTestDto.getUnit());
+                existingLabTest.setMinVal(labTestDto.getMinVal());
+                existingLabTest.setMaxVal(labTestDto.getMaxVal());
+                existingLabTest.setCriticalMinVal(labTestDto.getCriticalMinVal());
+                existingLabTest.setCriticalMaxVal(labTestDto.getCriticalMaxVal());
                 LabTest updatedLabTest = labTestRepository.save(existingLabTest);
                 auditLogService.logAction("LAB_TEST_UPDATED",
                                 "Lab Test '" + updatedLabTest.getName() + "' (ID: " + updatedLabTest.getId()
@@ -102,8 +109,23 @@ public class LabTestService {
                 labTest.setLab(lab);
                 labTest.setCode(globalTest.getCode());
                 labTest.setCategory(globalTest.getCategory());
-                labTest.setUnit(globalTest.getDefaultUnit());
+
+                // Map String unit from Global Catalog to Enum. Default to NONE if mismatch
+                try {
+                        String unitStr = globalTest.getDefaultUnit();
+                        TestUnit unit = (unitStr != null && !unitStr.isEmpty())
+                                        ? TestUnit.valueOf(unitStr.toUpperCase().replace("/", "_"))
+                                        : TestUnit.NONE;
+                        // Attempt a direct valueOf, if fail, fallback or Map.
+                        // Actually, let's try valueOf on exact match or common mappings if needed
+                        // For now assume global catalog uses same codes or map gracefully.
+                        // Simplest: Try lookup, else NONE.
+                        labTest.setUnit(resolveUnit(unitStr));
+                } catch (Exception e) {
+                        labTest.setUnit(TestUnit.NONE);
+                }
                 labTest.setDescription(globalTest.getDescription());
+
                 labTest.setPrice(price);
                 // Use Lab's default language, or fallback to "en", then to code
                 String lang = lab.getDefaultLanguage() != null ? lab.getDefaultLanguage() : "en";
@@ -120,5 +142,16 @@ public class LabTestService {
                                                 + ") was imported from Global Catalog.");
 
                 return labTestMapper.toDto(savedLabTest);
+        }
+
+        private TestUnit resolveUnit(String unitStr) {
+                if (unitStr == null || unitStr.trim().isEmpty())
+                        return TestUnit.NONE;
+                for (TestUnit u : TestUnit.values()) {
+                        if (u.name().equalsIgnoreCase(unitStr) || u.getSymbol().equalsIgnoreCase(unitStr)) {
+                                return u;
+                        }
+                }
+                return TestUnit.NONE;
         }
 }

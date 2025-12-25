@@ -38,9 +38,9 @@ services:
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
       - MINIO_BUCKET_NAME=medilab-reports
-    # volumes:
-    #   - ./target/classes:/app/classes
-    #   - ./src/main/resources:/app/resources
+    volumes:
+      - ./target/classes:/app/classes
+      - ./src/main/resources:/app/resources
     # DevTools will handle reactivation when these volumes are updated.
     depends_on:
       postgres:
@@ -48,7 +48,7 @@ services:
       rabbitmq:
         condition: service_started
       minio:
-        condition: service_healthy
+        condition: service_started
     networks:
       - medilab-network
 
@@ -119,11 +119,6 @@ services:
     command: server /data --console-address ":9001"
     networks:
       - medilab-network
-    healthcheck:
-      test: [ "CMD", "mc", "ready", "local" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
 networks:
   medilab-network:

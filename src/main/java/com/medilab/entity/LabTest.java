@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import com.medilab.enums.TestCategory;
+import com.medilab.enums.TestUnit;
 import java.util.List;
 
 @Entity
@@ -30,7 +31,13 @@ public class LabTest {
     @Enumerated(EnumType.STRING)
     private TestCategory category;
 
-    private String unit;
+    @Enumerated(EnumType.STRING)
+    private TestUnit unit;
+
+    private Double minVal;
+    private Double maxVal;
+    private Double criticalMinVal;
+    private Double criticalMaxVal;
 
     @Column(columnDefinition = "TEXT")
     private String description;

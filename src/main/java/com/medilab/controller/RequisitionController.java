@@ -62,4 +62,10 @@ public class RequisitionController {
         requisitionService.resendReport(id);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{id}/results")
+    public ResponseEntity<java.util.List<com.medilab.dto.TestResultDto>> getRequisitionResults(@PathVariable Long id) {
+        java.util.List<com.medilab.dto.TestResultDto> results = requisitionService.getRequisitionResults(id);
+        return ResponseEntity.ok(results);
+    }
 }
