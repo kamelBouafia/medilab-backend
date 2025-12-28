@@ -160,6 +160,16 @@
             <version>8.0.2</version>
             <type>pom</type>
         </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>typography</artifactId>
+            <version>8.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.ibm.icu</groupId>
+            <artifactId>icu4j</artifactId>
+            <version>74.2</version>
+        </dependency>
 
         <!-- MinIO Java SDK for object storage -->
         <dependency>

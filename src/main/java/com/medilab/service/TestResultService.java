@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -120,7 +121,8 @@ public class TestResultService {
     private void generateAndUploadPdfReport(Requisition requisition, List<TestResult> savedResults) {
         try {
             ReportGenerationDto reportData = buildReportData(requisition, savedResults);
-            byte[] pdfBytes = pdfReportService.generateReport(reportData);
+            Locale locale = new Locale(requisition.getLab().getDefaultLanguage());
+            byte[] pdfBytes = pdfReportService.generateReport(reportData, locale);
 
             String bucketName = "lab-" + requisition.getLab().getId() + "-reports";
             if (requisition.getPdfObjectPath() != null) {
