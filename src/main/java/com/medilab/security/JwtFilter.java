@@ -27,7 +27,8 @@ public class JwtFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain chain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
+            @NonNull FilterChain chain) throws ServletException, IOException {
         final String authorizationHeader = request.getHeader("Authorization");
 
         String username = null;
@@ -47,7 +48,8 @@ public class JwtFilter extends OncePerRequestFilter {
             Object authObj = claims.get("authorities");
             List<String> authoritiesList;
             if (authObj instanceof List) {
-                authoritiesList = ((List<?>) authObj).stream().filter(Objects::nonNull).map(Object::toString).collect(Collectors.toList());
+                authoritiesList = ((List<?>) authObj).stream().filter(Objects::nonNull).map(Object::toString)
+                        .collect(Collectors.toList());
             } else {
                 authoritiesList = Collections.emptyList();
             }
@@ -63,8 +65,8 @@ public class JwtFilter extends OncePerRequestFilter {
                     null, // Password is not needed in the context
                     authoritiesList.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()),
                     userType,
-                    forcePwd
-            );
+                    forcePwd,
+                    true);
 
             if (jwtUtil.validateToken(jwt, authenticatedUser)) {
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(

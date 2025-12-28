@@ -2,11 +2,18 @@ package com.medilab.repository;
 
 import com.medilab.entity.StaffUser;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface StaffUserRepository extends JpaRepository<StaffUser, Long> {
+@Repository
+public interface StaffUserRepository extends JpaRepository<StaffUser, Long>, JpaSpecificationExecutor<StaffUser> {
+    Optional<StaffUser> findByUsernameAndEnabledTrue(String username);
+
+    List<StaffUser> findByLabIdAndEnabledTrue(Long labId);
+
+    // Kept for basic lookups where we might need to find a deleted user
     Optional<StaffUser> findByUsername(String username);
-    List<StaffUser> findByLabId(Long labId);
 }

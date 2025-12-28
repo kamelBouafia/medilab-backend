@@ -42,6 +42,9 @@ public class StaffUser implements UserDetails {
     // New flag: when true the user must change their password on first login
     private boolean forcePasswordChange;
 
+    @Builder.Default
+    private boolean enabled = true;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));
@@ -64,11 +67,12 @@ public class StaffUser implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 
     public enum Role {
         Manager,
-        Technician
+        Technician,
+        Admin
     }
 }

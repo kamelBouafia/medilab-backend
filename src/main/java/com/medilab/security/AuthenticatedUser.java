@@ -21,6 +21,7 @@ public class AuthenticatedUser implements UserDetails {
     private final Collection<? extends GrantedAuthority> authorities;
     private final String userType; // "staff" or "patient"
     private final boolean forcePasswordChange;
+    private final boolean enabled;
 
     @Override
     public boolean isAccountNonExpired() {
@@ -39,6 +40,6 @@ public class AuthenticatedUser implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 }

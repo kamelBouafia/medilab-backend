@@ -29,7 +29,7 @@ public class StaffUserDetailsService implements UserDetailsService {
                 staffUser.getPassword(),
                 List.of(new SimpleGrantedAuthority(staffUser.getRole().name())),
                 "staff",
-                staffUser.isForcePasswordChange()
-        );
+                staffUser.isForcePasswordChange(),
+                staffUser.isEnabled());
     }
 }

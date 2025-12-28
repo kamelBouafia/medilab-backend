@@ -15,6 +15,7 @@ CREATE TABLE staff_users (
     role VARCHAR(50) NOT NULL,
     lab_id BIGINT NOT NULL,
     force_password_change BOOLEAN DEFAULT FALSE,
+    enabled BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (lab_id) REFERENCES labs(id)
 );
 
