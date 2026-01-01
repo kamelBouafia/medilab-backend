@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,12 +48,18 @@ public class AuthController {
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+            new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
         AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
 
         // Ensure lab trial is active before issuing token
-        labService.findById(user.getLabId()).ifPresent(trialService::assertTrialActive);
+        boolean isSystemAdmin = user.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("SYSTEM_ADMIN"));
+
+        if (!isSystemAdmin) {
+            labService.findById(user.getLabId()).ifPresent(trialService::assertTrialActive);
+        }
 
         String jwt = jwtUtil.generateToken(user);
 
@@ -64,7 +71,7 @@ public class AuthController {
     @PostMapping("/patient/login")
     public LoginResponse patientLogin(@Valid @RequestBody PatientLoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getDob().toString()));
+            new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getDob().toString()));
 
         AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
 
@@ -83,13 +90,13 @@ public class AuthController {
         // Create Lab
         LocalDateTime now = LocalDateTime.now();
         Lab lab = Lab.builder()
-                .name(req.getLabName())
-                .location(req.getLocation())
-                .contactEmail(req.getContactEmail())
-                .licenseNumber(req.getLicenseNumber())
-                .trialStart(now)
-                .trialEnd(now.plusDays(30))
-                .build();
+            .name(req.getLabName())
+            .location(req.getLocation())
+            .contactEmail(req.getContactEmail())
+            .licenseNumber(req.getLicenseNumber())
+            .trialStart(now)
+            .trialEnd(now.plusDays(30))
+            .build();
         Lab savedLab = labService.createLab(lab);
 
         // Create Manager staff via StaffService (this will encode password and set
@@ -108,7 +115,7 @@ public class AuthController {
 
         // Authenticate new user and return token
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.getAdminUsername(), req.getAdminPassword()));
+            new UsernamePasswordAuthenticationToken(req.getAdminUsername(), req.getAdminPassword()));
 
         AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
         String jwt = jwtUtil.generateToken(user);
@@ -122,7 +129,7 @@ public class AuthController {
     public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest req) {
         // Authenticate first
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(req.getUsername(), req.getOldPassword()));
+            new UsernamePasswordAuthenticationToken(req.getUsername(), req.getOldPassword()));
         AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
 
         if ("staff".equals(user.getUserType())) {

@@ -18,9 +18,10 @@ public class CreateStaffRequest {
     private String username;
 
     @NotBlank(message = "{validation.required}")
-    @Pattern(regexp = "Manager|Technician", message = "Invalid role")
+    @Pattern(regexp = "Manager|Technician|SYSTEM_ADMIN", message = "Invalid role")
     private String role;
 
+    private Long labId;
     private String email;
     private String phone;
     private String tempPassword;

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -57,10 +58,13 @@ public class Requisition {
 
     @ManyToMany(fetch = FetchType.LAZY)
 //    @Fetch(FetchMode.JOIN)
+    @BatchSize(size = 20)
     @JoinTable(name = "requisition_tests", joinColumns = @JoinColumn(name = "requisition_id"), inverseJoinColumns = @JoinColumn(name = "test_id"))
     private Set<LabTest> tests;
 
-    @OneToMany(mappedBy = "requisition")
+    @OneToMany(mappedBy = "requisition", fetch = FetchType.LAZY)
+//    @Fetch(FetchMode.JOIN)
+    @BatchSize(size = 20)
     private List<TestResult> testResults;
 
     @Column(name = "pdf_object_path", length = 500)

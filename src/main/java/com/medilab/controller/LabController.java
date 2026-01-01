@@ -7,9 +7,8 @@ import com.medilab.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import com.medilab.security.SecurityUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/labs")
@@ -17,6 +16,36 @@ import org.springframework.web.bind.annotation.RestController;
 public class LabController {
 
     private final LabRepository labRepository;
+
+    @GetMapping
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<java.util.List<LabDto>> getAllLabs() {
+        return ResponseEntity.ok(labRepository.findAll().stream()
+                .map(lab -> LabDto.builder()
+                        .id(lab.getId())
+                        .name(lab.getName())
+                        .location(lab.getLocation())
+                        .contactEmail(lab.getContactEmail())
+                        .licenseNumber(lab.getLicenseNumber())
+                        .trialStart(lab.getTrialStart())
+                        .trialEnd(lab.getTrialEnd())
+                        .build())
+                .collect(java.util.stream.Collectors.toList()));
+    }
+
+    @PostMapping
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<LabDto> createLab(@RequestBody Lab lab) {
+        Lab saved = labRepository.save(lab);
+        return ResponseEntity.ok(LabDto.builder()
+                .id(saved.getId())
+                .name(saved.getName())
+                .contactEmail(saved.getContactEmail())
+                .licenseNumber(saved.getLicenseNumber())
+                .trialStart(saved.getTrialStart())
+                .trialEnd(saved.getTrialEnd())
+                .build());
+    }
 
     @GetMapping("/me")
     public ResponseEntity<LabDto> getMyLab() {

@@ -6,8 +6,6 @@ import com.medilab.entity.Lab;
 import com.medilab.entity.StaffUser;
 import com.medilab.mapper.StaffUserMapper;
 import com.medilab.repository.StaffUserRepository;
-import com.medilab.security.AuthenticatedUser;
-import com.medilab.security.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,14 +31,21 @@ public class StaffService {
     private final StaffUserMapper staffUserMapper;
 
     @Transactional(readOnly = true)
-    public Page<StaffUserDto> getStaffPaged(int page, int limit, String q, String sort, String order) {
-        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+    public Page<StaffUserDto> getStaffPaged(int page, int limit, String q, String sort, String order, Long labId,
+            boolean showDisabled) {
         Sort.Direction direction = Sort.Direction.fromString(order);
         Pageable pageable = PageRequest.of(Math.max(0, page - 1), limit, Sort.by(direction, sort));
 
-        Specification<StaffUser> spec = (root, query, cb) -> cb.and(
-                cb.equal(root.get("lab").get("id"), user.getLabId()),
-                cb.equal(root.get("enabled"), true));
+        Specification<StaffUser> spec = (root, query, cb) -> {
+            Specification<StaffUser> baseSpec = Specification.where(null);
+            if (!showDisabled) {
+                baseSpec = baseSpec.and((r, qry, c) -> c.equal(r.get("enabled"), true));
+            }
+            if (labId != null) {
+                baseSpec = baseSpec.and((r, qry, c) -> c.equal(r.get("lab").get("id"), labId));
+            }
+            return baseSpec.toPredicate(root, query, cb);
+        };
 
         if (StringUtils.hasText(q)) {
             String search = "%" + q.toLowerCase() + "%";
@@ -84,17 +89,21 @@ public class StaffService {
         staff.setPassword(passwordEncoder.encode(tempPassword));
         staff.setForcePasswordChange(true);
 
-        log.info("Created staff user: {} with role: {} for lab: {}", username, role, lab.getName());
+        log.info("Created staff user: {} with role: {} for lab: {}", username, role,
+                lab != null ? lab.getName() : "GLOBAL");
         return staffUserRepository.save(staff);
     }
 
     @Transactional
-    public StaffUser updateStaff(Long labId, Long staffId, CreateStaffRequest req) {
+    public StaffUser updateStaff(Long staffId, CreateStaffRequest req, Long labId) {
         StaffUser staff = staffUserRepository.findById(staffId)
                 .orElseThrow(() -> new IllegalArgumentException("Staff user not found"));
 
-        if (!staff.getLab().getId().equals(labId)) {
-            throw new IllegalArgumentException("Unauthorized: Staff does not belong to your lab");
+        if (labId != null) {
+            // If labId is provided, enforce it (Manager case)
+            if (staff.getLab() == null || !staff.getLab().getId().equals(labId)) {
+                throw new IllegalArgumentException("Unauthorized: Staff does not belong to your lab");
+            }
         }
 
         staff.setName(req.getName());
@@ -107,25 +116,26 @@ public class StaffService {
             staff.setForcePasswordChange(true);
         }
 
-        log.info("Updated staff user: {} (ID: {}) in lab: {}", staff.getUsername(), staffId, labId);
+        log.info("Updated staff user: {} (ID: {})", staff.getUsername(), staffId);
         return staffUserRepository.save(staff);
     }
 
     @Transactional
-    public void deleteStaff(Long labId, Long staffId) {
+    public void deleteStaff(Long staffId, Long labId) {
         StaffUser staff = staffUserRepository.findById(staffId)
                 .orElseThrow(() -> new IllegalArgumentException("Staff user not found"));
 
-        if (!staff.getLab().getId().equals(labId)) {
-            throw new IllegalArgumentException("Unauthorized: Staff does not belong to your lab");
+        if (labId != null) {
+            if (staff.getLab() == null || !staff.getLab().getId().equals(labId)) {
+                throw new IllegalArgumentException("Unauthorized: Staff does not belong to your lab");
+            }
         }
 
         staff.setEnabled(false);
-        // Append timestamp to username to allow reuse of the original username
         staff.setUsername(staff.getUsername() + "_del_" + System.currentTimeMillis());
         staffUserRepository.save(staff);
 
-        log.info("Soft-deleted staff user: {} from lab: {}", staffId, labId);
+        log.info("Soft-deleted staff user: {} from context lab: {}", staffId, labId);
     }
 
     private String generateUniqueUsername(CreateStaffRequest req) {

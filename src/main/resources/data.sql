@@ -18,7 +18,7 @@ INSERT INTO staff_users (id, name, username, password, role, lab_id, force_passw
 (3, 'Technician', 'technician', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 1, false),
 (4, 'Bob', 'bob', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Technician', 2, true),
 (5, 'BranchManager', 'branchmanager', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Manager', 2, false),
-(6, 'SysAdmin', 'sysadmin', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'Admin', 1, false);
+(6, 'SysAdmin', 'sysadmin', '$2a$10$slYQmyNdGzTn7ZLBXBChFOC9f6kFjAqPhccnP6DxlWXx2lPk1C3G6', 'SYSTEM_ADMIN', NULL, false);
 
 -- PATIENTS (52 total)
 INSERT INTO patients (id, name, username, dob, gender, contact, created_by_id, lab_id) VALUES

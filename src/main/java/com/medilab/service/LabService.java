@@ -14,6 +14,11 @@ public class LabService {
         return labRepository.save(lab);
     }
 
-    public java.util.Optional<Lab> findById(Long id) { return labRepository.findById(id); }
-}
+    public java.util.List<Lab> findAll() {
+        return labRepository.findAll();
+    }
 
+    public java.util.Optional<Lab> findById(Long id) {
+        return labRepository.findById(id);
+    }
+}

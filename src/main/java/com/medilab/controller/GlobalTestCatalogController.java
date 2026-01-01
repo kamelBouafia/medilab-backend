@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/global-tests")
-@PreAuthorize("hasRole('Admin')") // Assuming 'Admin' is the system admin role
+@PreAuthorize("hasRole('SYSTEM_ADMIN')")
 @RequiredArgsConstructor
 public class GlobalTestCatalogController {
 

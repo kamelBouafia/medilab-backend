@@ -20,16 +20,16 @@ public class StaffUserDetailsService implements UserDetailsService {
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         StaffUser staffUser = staffUserRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+            .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         return new AuthenticatedUser(
-                staffUser.getId(),
-                staffUser.getLab().getId(),
-                staffUser.getUsername(),
-                staffUser.getPassword(),
-                List.of(new SimpleGrantedAuthority(staffUser.getRole().name())),
-                "staff",
-                staffUser.isForcePasswordChange(),
-                staffUser.isEnabled());
+            staffUser.getId(),
+            staffUser.getLab() == null ? null : staffUser.getLab().getId(),
+            staffUser.getUsername(),
+            staffUser.getPassword(),
+            List.of(new SimpleGrantedAuthority(staffUser.getRole().name())),
+            "staff",
+            staffUser.isForcePasswordChange(),
+            staffUser.isEnabled());
     }
 }

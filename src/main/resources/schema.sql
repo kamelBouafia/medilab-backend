@@ -13,7 +13,7 @@ CREATE TABLE staff_users (
     username VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     role VARCHAR(50) NOT NULL,
-    lab_id BIGINT NOT NULL,
+    lab_id BIGINT,
     force_password_change BOOLEAN DEFAULT FALSE,
     enabled BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (lab_id) REFERENCES labs(id)
@@ -97,7 +97,7 @@ CREATE TABLE audit_log (
     user_id BIGINT NOT NULL,
     action VARCHAR(255) NOT NULL,
     details TEXT,
-    lab_id BIGINT NOT NULL,
+    lab_id BIGINT,
     FOREIGN KEY (user_id) REFERENCES staff_users(id),
     FOREIGN KEY (lab_id) REFERENCES labs(id)
 );

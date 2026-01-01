@@ -221,6 +221,6 @@ public class SupportServiceImpl implements SupportService {
         }
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .anyMatch("Admin"::equals);
+                .anyMatch("SYSTEM_ADMIN"::equals);
     }
 }

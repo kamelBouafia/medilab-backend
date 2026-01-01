@@ -60,7 +60,9 @@ public class AuditLogService {
         auditLog.setDetails(details);
 
         staffUserRepository.findById(user.getId()).ifPresent(auditLog::setUser);
-        labRepository.findById(user.getLabId()).ifPresent(auditLog::setLab);
+        if (user.getLabId() != null) {
+            labRepository.findById(user.getLabId()).ifPresent(auditLog::setLab);
+        }
 
         auditLogRepository.save(auditLog);
     }

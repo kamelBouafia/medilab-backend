@@ -36,7 +36,7 @@ public class StaffUser implements UserDetails {
     private Role role;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lab_id", nullable = false)
+    @JoinColumn(name = "lab_id", nullable = true)
     private Lab lab;
 
     // New flag: when true the user must change their password on first login
@@ -73,6 +73,6 @@ public class StaffUser implements UserDetails {
     public enum Role {
         Manager,
         Technician,
-        Admin
+        SYSTEM_ADMIN
     }
 }

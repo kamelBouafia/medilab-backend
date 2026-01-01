@@ -26,38 +26,62 @@ public class StaffManagementController {
     private final StaffUserMapper staffUserMapper;
 
     @GetMapping
-    @PreAuthorize("hasRole('Manager')")
+    @PreAuthorize("hasAnyRole('Manager', 'SYSTEM_ADMIN')")
     public ResponseEntity<org.springframework.data.domain.Page<StaffUserDto>> getStaff(
             @RequestParam(defaultValue = "1") int _page,
             @RequestParam(defaultValue = "10") int _limit,
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "name") String _sort,
-            @RequestParam(defaultValue = "asc") String _order) {
-        return ResponseEntity.ok(staffService.getStaffPaged(_page, _limit, q, _sort, _order));
+            @RequestParam(defaultValue = "asc") String _order,
+            @RequestParam(required = false) Long labId,
+            @RequestParam(defaultValue = "false") boolean showDeactivated) {
+
+        AuthenticatedUser auth = SecurityUtils.getAuthenticatedUser();
+        boolean isSysAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SYSTEM_ADMIN"));
+
+        Long finalLabId = isSysAdmin ? labId : auth.getLabId();
+        boolean finalShowDeactivated = isSysAdmin && showDeactivated;
+
+        return ResponseEntity
+                .ok(staffService.getStaffPaged(_page, _limit, q, _sort, _order, finalLabId, finalShowDeactivated));
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('Manager')")
+    @PreAuthorize("hasAnyRole('Manager', 'SYSTEM_ADMIN')")
     public ResponseEntity<StaffUserDto> addStaff(@Valid @RequestBody CreateStaffRequest req) {
         AuthenticatedUser auth = SecurityUtils.getAuthenticatedUser();
-        Lab lab = labService.findById(auth.getLabId()).orElseThrow(() -> new IllegalStateException("Lab not found"));
+        boolean isSysAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SYSTEM_ADMIN"));
+
+        Long finalLabId = isSysAdmin ? req.getLabId() : auth.getLabId();
+
+        Lab lab = null;
+        if (finalLabId != null) {
+            lab = labService.findById(finalLabId).orElseThrow(() -> new IllegalStateException("Lab not found"));
+        }
+
         StaffUser created = staffService.createStaff(lab, req);
         return new ResponseEntity<>(staffUserMapper.toDto(created), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('Manager')")
+    @PreAuthorize("hasAnyRole('Manager', 'SYSTEM_ADMIN')")
     public ResponseEntity<StaffUserDto> updateStaff(@PathVariable Long id, @Valid @RequestBody CreateStaffRequest req) {
         AuthenticatedUser auth = SecurityUtils.getAuthenticatedUser();
-        StaffUser updated = staffService.updateStaff(auth.getLabId(), id, req);
+        boolean isSysAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SYSTEM_ADMIN"));
+
+        Long contextLabId = isSysAdmin ? null : auth.getLabId();
+        StaffUser updated = staffService.updateStaff(id, req, contextLabId);
         return ResponseEntity.ok(staffUserMapper.toDto(updated));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('Manager')")
+    @PreAuthorize("hasAnyRole('Manager', 'SYSTEM_ADMIN')")
     public ResponseEntity<Void> deleteStaff(@PathVariable Long id) {
         AuthenticatedUser auth = SecurityUtils.getAuthenticatedUser();
-        staffService.deleteStaff(auth.getLabId(), id);
+        boolean isSysAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SYSTEM_ADMIN"));
+
+        Long contextLabId = isSysAdmin ? null : auth.getLabId();
+        staffService.deleteStaff(id, contextLabId);
         return ResponseEntity.noContent().build();
     }
 }

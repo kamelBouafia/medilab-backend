@@ -14,7 +14,6 @@ public class AuthenticatedUser implements UserDetails {
 
     @NonNull
     private final Long id;
-    @NonNull
     private final Long labId;
     private final String username;
     private final String password;
