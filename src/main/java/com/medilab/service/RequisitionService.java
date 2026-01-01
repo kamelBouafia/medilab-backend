@@ -10,15 +10,12 @@ import com.medilab.entity.TestResult;
 import com.medilab.exception.ResourceNotFoundException;
 import com.medilab.mapper.RequisitionMapper;
 import com.medilab.mapper.TestResultMapper;
-import com.medilab.repository.LabRepository;
-import com.medilab.repository.LabTestRepository;
-import com.medilab.repository.PatientRepository;
-import com.medilab.repository.RequisitionRepository;
-import com.medilab.repository.StaffUserRepository;
+import com.medilab.repository.*;
 import com.medilab.security.AuthenticatedUser;
 import com.medilab.security.SecurityUtils;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -185,11 +182,9 @@ public class RequisitionService {
     }
 
     @Transactional
-    public RequisitionDto updateRequisitionStatus(Long requisitionId, RequisitionDto requisitionDto) {
+    public RequisitionDto updateRequisitionStatus(Long requisitionId, @NotNull(message = "Status cannot be null") SampleStatus newStatus) {
         Requisition requisition = requisitionRepository.findById(requisitionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Requisition not found with id: " + requisitionId));
-
-        SampleStatus newStatus = SampleStatus.valueOf(requisitionDto.getStatus());
 
         if (requisition.getStatus() == SampleStatus.COMPLETED || requisition.getStatus() == SampleStatus.CANCELLED) {
             throw new IllegalStateException("Cannot change status of a completed or cancelled requisition.");

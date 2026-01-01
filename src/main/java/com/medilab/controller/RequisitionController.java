@@ -1,6 +1,7 @@
 package com.medilab.controller;
 
 import com.medilab.dto.RequisitionDto;
+import com.medilab.dto.UpdateRequisitionStatusDto;
 import com.medilab.service.RequisitionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,8 +47,8 @@ public class RequisitionController {
 
     @PatchMapping("/{requisitionId}/status")
     public ResponseEntity<RequisitionDto> updateRequisitionStatus(@PathVariable Long requisitionId,
-            @Valid @RequestBody RequisitionDto requisitionDto) {
-        RequisitionDto updatedRequisition = requisitionService.updateRequisitionStatus(requisitionId, requisitionDto);
+            @Valid @RequestBody UpdateRequisitionStatusDto statusDto) {
+        RequisitionDto updatedRequisition = requisitionService.updateRequisitionStatus(requisitionId, statusDto.getStatus());
         return ResponseEntity.ok(updatedRequisition);
     }
 
