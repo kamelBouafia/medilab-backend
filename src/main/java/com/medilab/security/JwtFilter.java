@@ -57,6 +57,8 @@ public class JwtFilter extends OncePerRequestFilter {
             String userType = claims.get("type", String.class);
             Boolean forceFlag = claims.get("forcePasswordChange", Boolean.class);
             boolean forcePwd = Boolean.TRUE.equals(forceFlag);
+            Boolean gdprFlag = claims.get("gdprAccepted", Boolean.class);
+            boolean gdprAccepted = Boolean.TRUE.equals(gdprFlag);
 
             AuthenticatedUser authenticatedUser = new AuthenticatedUser(
                     userId,
@@ -66,6 +68,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     authoritiesList.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()),
                     userType,
                     forcePwd,
+                    gdprAccepted,
                     true);
 
             if (jwtUtil.validateToken(jwt, authenticatedUser)) {

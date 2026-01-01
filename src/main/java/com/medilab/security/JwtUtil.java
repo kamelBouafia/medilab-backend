@@ -33,8 +33,10 @@ public class JwtUtil {
 
     @PostConstruct
     public void init() {
-        // Try to decode the configured secret as Base64 first; if that fails, use raw UTF-8 bytes.
-        // If the resulting key material is shorter than 32 bytes (256 bits), derive a 256-bit key via SHA-256.
+        // Try to decode the configured secret as Base64 first; if that fails, use raw
+        // UTF-8 bytes.
+        // If the resulting key material is shorter than 32 bytes (256 bits), derive a
+        // 256-bit key via SHA-256.
         try {
             byte[] keyBytes;
             try {
@@ -60,9 +62,11 @@ public class JwtUtil {
         claims.put("userId", authenticatedUser.getId());
         claims.put("labId", authenticatedUser.getLabId());
         claims.put("username", authenticatedUser.getUsername()); // Added username as a custom claim
-        claims.put("authorities", authenticatedUser.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()));
+        claims.put("authorities", authenticatedUser.getAuthorities().stream().map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList()));
         claims.put("type", authenticatedUser.getUserType());
         claims.put("forcePasswordChange", authenticatedUser.isForcePasswordChange());
+        claims.put("gdprAccepted", authenticatedUser.isGdprAccepted());
 
         return createToken(claims, authenticatedUser.getUsername());
     }

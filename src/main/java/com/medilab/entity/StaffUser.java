@@ -45,6 +45,9 @@ public class StaffUser implements UserDetails {
     @Builder.Default
     private boolean enabled = true;
 
+    private boolean gdprAccepted;
+    private java.time.LocalDateTime gdprAcceptedAt;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));

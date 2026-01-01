@@ -41,6 +41,9 @@ public class Patient {
     private String bloodGroup;
     private String allergies;
 
+    private boolean gdprAccepted;
+    private java.time.LocalDateTime gdprAcceptedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id", nullable = false)
     private StaffUser createdBy;

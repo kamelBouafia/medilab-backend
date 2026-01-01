@@ -35,3 +35,6 @@ databaseChangeLog:
   - include:
       file: changes/11-make-lab-id-nullable.sql
       relativeToChangelogFile: true
+  - include:
+      file: changes/12-add-gdpr-consent-fields.sql
+      relativeToChangelogFile: true

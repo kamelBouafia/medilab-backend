@@ -20,6 +20,7 @@ public class AuthenticatedUser implements UserDetails {
     private final Collection<? extends GrantedAuthority> authorities;
     private final String userType; // "staff" or "patient"
     private final boolean forcePasswordChange;
+    private final boolean gdprAccepted;
     private final boolean enabled;
 
     @Override

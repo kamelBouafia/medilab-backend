@@ -32,6 +32,7 @@ public class PatientUserDetailsService implements UserDetailsService {
                 List.of(new SimpleGrantedAuthority("ROLE_PATIENT")),
                 "patient",
                 false,
+                patient.isGdprAccepted(),
                 true);
     }
 }
