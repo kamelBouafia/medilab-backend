@@ -13,10 +13,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class GlobalTestCatalogService {
 
     private final GlobalTestCatalogRepository globalTestCatalogRepository;
@@ -40,11 +42,13 @@ public class GlobalTestCatalogService {
         return globalTestCatalogRepository.findAll(spec, pageable).map(globalTestCatalogMapper::toDto);
     }
 
+    @Transactional
     public GlobalTestCatalogDto addTest(GlobalTestCatalogDto dto) {
         GlobalTestCatalog entity = globalTestCatalogMapper.toEntity(dto);
         return globalTestCatalogMapper.toDto(globalTestCatalogRepository.save(entity));
     }
 
+    @Transactional
     public GlobalTestCatalogDto updateTest(Long id, GlobalTestCatalogDto dto) {
         GlobalTestCatalog existing = globalTestCatalogRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Test not found"));
@@ -58,6 +62,7 @@ public class GlobalTestCatalogService {
         return globalTestCatalogMapper.toDto(globalTestCatalogRepository.save(existing));
     }
 
+    @Transactional
     public void deleteTest(Long id) {
         if (!globalTestCatalogRepository.existsById(id)) {
             throw new ResourceNotFoundException("Test not found");

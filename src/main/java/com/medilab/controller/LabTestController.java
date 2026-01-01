@@ -41,6 +41,11 @@ public class LabTestController {
         return new ResponseEntity<>(labTestService.importTestFromGlobal(globalTestId, price), HttpStatus.CREATED);
     }
 
+    @PostMapping("/import-bulk")
+    public ResponseEntity<java.util.List<LabTestDto>> importTests(@RequestBody com.medilab.dto.BulkImportDto request) {
+        return new ResponseEntity<>(labTestService.importTestsFromGlobal(request.getItems()), HttpStatus.CREATED);
+    }
+
     @PutMapping("/{testId}")
     public ResponseEntity<LabTestDto> updateLabTest(@PathVariable Long testId,
             @Valid @RequestBody LabTestDto labTestDto) {

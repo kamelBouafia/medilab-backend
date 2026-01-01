@@ -38,3 +38,9 @@ databaseChangeLog:
   - include:
       file: changes/12-add-gdpr-consent-fields.sql
       relativeToChangelogFile: true
+  - include:
+      file: changes/13-global-test-catalog-schema.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/14-global-test-catalog-seed.sql
+      relativeToChangelogFile: true

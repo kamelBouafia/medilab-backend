@@ -102,6 +102,27 @@ public class LabTestService {
         }
 
         @Transactional
+        public java.util.List<LabTestDto> importTestsFromGlobal(
+                        java.util.List<com.medilab.dto.BulkImportDto.ImportItem> items) {
+                java.util.List<LabTestDto> importedTests = new ArrayList<>();
+                AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+
+                for (com.medilab.dto.BulkImportDto.ImportItem item : items) {
+                        try {
+                                if (labTestRepository
+                                                .findByGlobalTestIdAndLabId(item.getGlobalTestId(), user.getLabId())
+                                                .isPresent()) {
+                                        continue;
+                                }
+                                importedTests.add(importTestFromGlobal(item.getGlobalTestId(), item.getPrice()));
+                        } catch (Exception e) {
+                                log.error("Failed to import test " + item.getGlobalTestId(), e);
+                        }
+                }
+                return importedTests;
+        }
+
+        @Transactional
         public LabTestDto importTestFromGlobal(Long globalTestId, java.math.BigDecimal price) {
                 AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
                 GlobalTestCatalog globalTest = globalTestCatalogRepository.findById(globalTestId)

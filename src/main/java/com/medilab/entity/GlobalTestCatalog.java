@@ -26,7 +26,12 @@ public class GlobalTestCatalog {
 
     private String defaultUnit;
 
-    @ElementCollection
+    private Double defaultMinVal;
+    private Double defaultMaxVal;
+    private Double defaultCriticalMin;
+    private Double defaultCriticalMax;
+
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "global_test_names", joinColumns = @JoinColumn(name = "test_id"))
     @MapKeyColumn(name = "language_code") // e.g. "en", "es", "fr"
     @Column(name = "name")

@@ -19,6 +19,10 @@ public class GlobalTestCatalogDto {
     private String code;
     private TestCategory category;
     private String defaultUnit;
+    private Double defaultMinVal;
+    private Double defaultMaxVal;
+    private Double defaultCriticalMin;
+    private Double defaultCriticalMax;
     private Map<String, String> names; // Language code -> Name
     private String description;
 }
