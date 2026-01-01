@@ -68,9 +68,9 @@ public class PatientService {
         }
 
         Patient savedPatient = patientRepository.save(patient);
-        log.info("Patient created: {} (ID: {})", savedPatient.getName(), savedPatient.getId());
+        log.info("Patient created (ID: {})", savedPatient.getId());
         auditLogService.logAction("PATIENT_CREATED",
-                "Patient '" + savedPatient.getName() + "' (ID: " + savedPatient.getId() + ") was created.");
+                "Patient ID: " + savedPatient.getId() + " was created.");
         return patientMapper.toDto(savedPatient);
     }
 
@@ -114,21 +114,32 @@ public class PatientService {
         patientMapper.updatePatientFromDto(patientDto, existingPatient);
 
         Patient updatedPatient = patientRepository.save(existingPatient);
-        log.info("Patient updated: {} (ID: {})", updatedPatient.getName(), updatedPatient.getId());
+        log.info("Patient updated (ID: {})", updatedPatient.getId());
         auditLogService.logAction("PATIENT_UPDATED",
-                "Patient '" + updatedPatient.getName() + "' (ID: " + updatedPatient.getId() + ") was updated.");
+                "Patient ID: " + updatedPatient.getId() + " was updated.");
         return patientMapper.toDto(updatedPatient);
     }
 
     @Transactional
     public void deletePatient(Long patientId) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
-        Patient existingPatient = patientRepository.findByIdAndLabId(patientId, user.getLabId())
+        Patient patient = patientRepository.findByIdAndLabId(patientId, user.getLabId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
 
-        patientRepository.delete(existingPatient);
-        log.info("Patient deleted: {} (ID: {})", existingPatient.getName(), existingPatient.getId());
-        auditLogService.logAction("PATIENT_DELETED",
-                "Patient '" + existingPatient.getName() + "' (ID: " + existingPatient.getId() + ") was deleted.");
+        // GDPR Right to be Forgotten: Anonymize sensitive PII while keeping clinical
+        // record structures
+        patient.setName("ANONYMIZED_" + patient.getId());
+        patient.setEmail("anonymized_" + patient.getId() + "@example.com");
+        patient.setPhone(null);
+        patient.setContact(null);
+        patient.setAddress(null);
+        patient.setAllergies(null);
+        patient.setUsername("anonymized_" + patient.getId() + "_" + System.currentTimeMillis() % 1000);
+
+        patientRepository.save(patient);
+
+        log.info("Patient anonymized (ID: {})", patient.getId());
+        auditLogService.logAction("PATIENT_ANONYMIZED",
+                "Patient ID: " + patient.getId() + " was anonymized (Right to be Forgotten).");
     }
 }

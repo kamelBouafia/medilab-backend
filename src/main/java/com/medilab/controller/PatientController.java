@@ -2,6 +2,7 @@ package com.medilab.controller;
 
 import com.medilab.dto.PatientDto;
 import com.medilab.service.AuditLogService;
+import com.medilab.service.PatientDataService;
 import com.medilab.service.PatientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 public class PatientController {
 
     private final PatientService patientService;
+    private final PatientDataService patientDataService;
     private final AuditLogService auditLogService;
 
     @GetMapping
@@ -55,5 +57,11 @@ public class PatientController {
     public ResponseEntity<Void> deletePatient(@PathVariable Long patientId) {
         patientService.deletePatient(patientId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{patientId}/export")
+    public ResponseEntity<java.util.Map<String, Object>> exportPatientData(@PathVariable Long patientId) {
+        com.medilab.security.AuthenticatedUser user = com.medilab.security.SecurityUtils.getAuthenticatedUser();
+        return ResponseEntity.ok(patientDataService.exportFullPatientData(patientId, user.getLabId()));
     }
 }

@@ -30,4 +30,10 @@ public class PatientEndpointsController {
     public ResponseEntity<List<TestResultDto>> getPatientTestResults(@PathVariable Long reqId) {
         return ResponseEntity.ok(patientDataService.getPatientTestResults(reqId));
     }
+
+    @GetMapping("/export")
+    public ResponseEntity<java.util.Map<String, Object>> exportMyData() {
+        com.medilab.security.AuthenticatedUser user = com.medilab.security.SecurityUtils.getAuthenticatedUser();
+        return ResponseEntity.ok(patientDataService.exportFullPatientData(user.getId(), user.getLabId()));
+    }
 }

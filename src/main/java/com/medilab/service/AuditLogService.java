@@ -57,7 +57,7 @@ public class AuditLogService {
     public void logAction(AuthenticatedUser user, String action, String details) {
         AuditLog auditLog = new AuditLog();
         auditLog.setAction(action);
-        auditLog.setDetails(details);
+        auditLog.setDetails(sanitize(details));
 
         staffUserRepository.findById(user.getId()).ifPresent(auditLog::setUser);
         if (user.getLabId() != null) {
@@ -65,5 +65,14 @@ public class AuditLogService {
         }
 
         auditLogRepository.save(auditLog);
+    }
+
+    private String sanitize(String input) {
+        if (input == null)
+            return null;
+        // Basic patterns for scrubbing PII from logs as a secondary defense
+        String masked = input.replaceAll("(?i)[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}", "[EMAIL_MASKED]");
+        masked = masked.replaceAll("\\+?[0-9]{10,15}", "[PHONE_MASKED]");
+        return masked;
     }
 }
