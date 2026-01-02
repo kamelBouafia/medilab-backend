@@ -1,5 +1,7 @@
 package com.medilab.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,54 +17,72 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class InterpretService {
 
-    @Value("${google.api.key}")
-    private String googleApiKey;
-
-    @Value("${google.ai.model:gemini-1.5-flash}")
-    private String modelName;
+    @Value("${openrouter.api.key}")
+    private String openrouterApiKey;
 
     private final RestClient restClient = RestClient.create();
 
-    public String getInterpretation(String testName, String resultValue) {
-        if ("placeholder".equalsIgnoreCase(googleApiKey) || googleApiKey == null || googleApiKey.isEmpty()) {
-            log.warn("Google API Key is not configured. Returning placeholder response.");
-            return "AI Interpretation is not configured. Please set a valid Google API Key in the backend application.properties.";
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class ChatCompletionResponse {
+        public List<Choice> choices;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class Choice {
+        public Message message;
+        @JsonProperty("finish_reason")
+        public String finishReason;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class Message {
+        public String content;
+    }
+
+    public String getInterpretation(String testName, String resultValue, String language) {
+        if ("placeholder".equalsIgnoreCase(openrouterApiKey) || openrouterApiKey == null || openrouterApiKey.isEmpty()) {
+            log.warn("OpenRouter API Key is not configured. Returning placeholder response.");
+            return "AI Interpretation is not configured. Please set a valid OpenRouter API Key in the backend application.properties.";
         }
 
         String prompt = String.format(
-                "Interpret the following lab test result: %s, value: %s. Provide a concise summary of what this indicates.",
-                testName, resultValue);
+                "Interpret the following lab test result: %s, value: %s. Provide a one-sentence summary of what this indicates in '%s' language.",
+                testName, resultValue, language);
 
         try {
             Map<String, Object> requestBody = Map.of(
-                    "contents", List.of(
-                            Map.of("parts", List.of(
-                                    Map.of("text", prompt)))));
+                    "model", "qwen/qwen-2.5-7b-instruct",
+                    "messages", List.of(
+                            Map.of("role", "user",
+                                    "content", prompt)));
 
-            Map response = restClient.post()
-                    .uri("https://generativelanguage.googleapis.com/v1beta/models/" + modelName
-                            + ":generateContent?key=" + googleApiKey)
+            ChatCompletionResponse response = restClient.post()
+                    .uri("https://openrouter.ai/api/v1/chat/completions")
+                    .header("Authorization", "Bearer " + openrouterApiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requestBody)
                     .retrieve()
-                    .body(Map.class);
+                    .body(ChatCompletionResponse.class);
 
-            if (response != null && response.containsKey("candidates")) {
-                List candidates = (List) response.get("candidates");
-                if (!candidates.isEmpty()) {
-                    Map firstCandidate = (Map) candidates.get(0);
-                    Map content = (Map) firstCandidate.get("content");
-                    List parts = (List) content.get("parts");
-                    if (!parts.isEmpty()) {
-                        Map firstPart = (Map) parts.get(0);
-                        return (String) firstPart.get("text");
+            if (response != null && response.choices != null && !response.choices.isEmpty()) {
+                Choice firstChoice = response.choices.getFirst();
+                if (firstChoice != null) {
+                    if ("length".equalsIgnoreCase(firstChoice.finishReason)) {
+                        log.warn("AI interpretation may be truncated. Finish reason: length. Content: {}", firstChoice.message.content);
+                    }
+                    if (firstChoice.message != null && firstChoice.message.content != null) {
+                        String content = firstChoice.message.content.trim();
+                        if (content.startsWith("\"") && content.endsWith("\"")) {
+                            content = content.substring(1, content.length() - 1);
+                        }
+                        return content;
                     }
                 }
             }
             return "Could not generate interpretation.";
 
         } catch (Exception e) {
-            log.error("Error calling Gemini API", e);
+            log.error("Error calling OpenRouter API", e);
             return "Error retrieving AI interpretation: " + e.getMessage();
         }
     }
