@@ -35,7 +35,7 @@ public class StaffUser implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "lab_id", nullable = true)
     private Lab lab;
 

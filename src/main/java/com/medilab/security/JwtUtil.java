@@ -67,6 +67,9 @@ public class JwtUtil {
         claims.put("type", authenticatedUser.getUserType());
         claims.put("forcePasswordChange", authenticatedUser.isForcePasswordChange());
         claims.put("gdprAccepted", authenticatedUser.isGdprAccepted());
+        if (authenticatedUser.getTrialEnd() != null) {
+            claims.put("trialEnd", authenticatedUser.getTrialEnd().toString());
+        }
 
         return createToken(claims, authenticatedUser.getUsername());
     }

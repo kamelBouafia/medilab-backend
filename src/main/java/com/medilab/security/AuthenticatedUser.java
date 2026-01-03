@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 
 @Getter
@@ -22,6 +23,7 @@ public class AuthenticatedUser implements UserDetails {
     private final boolean forcePasswordChange;
     private final boolean gdprAccepted;
     private final boolean enabled;
+    private final LocalDateTime trialEnd;
 
     @Override
     public boolean isAccountNonExpired() {

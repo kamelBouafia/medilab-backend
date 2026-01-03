@@ -31,6 +31,7 @@ public class StaffUserDetailsService implements UserDetailsService {
                 "staff",
                 staffUser.isForcePasswordChange(),
                 staffUser.isGdprAccepted(),
-                staffUser.isEnabled());
+                staffUser.isEnabled(),
+                staffUser.getLab() == null ? null : staffUser.getLab().getTrialEnd());
     }
 }

@@ -33,6 +33,7 @@ public class PatientUserDetailsService implements UserDetailsService {
                 "patient",
                 false,
                 patient.isGdprAccepted(),
-                true);
+                true,
+                patient.getLab().getTrialEnd());
     }
 }

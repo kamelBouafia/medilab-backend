@@ -51,7 +51,8 @@ public class ConsentController {
                 user.getUserType(),
                 user.isForcePasswordChange(),
                 true,
-                user.isEnabled());
+                user.isEnabled(),
+                user.getTrialEnd());
 
         String newToken = jwtUtil.generateToken(updatedUser);
         return ResponseEntity.ok(Map.of("token", newToken));

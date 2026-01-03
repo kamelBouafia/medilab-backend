@@ -14,7 +14,6 @@ import com.medilab.security.JwtUtil;
 import com.medilab.service.AuditLogService;
 import com.medilab.service.LabService;
 import com.medilab.service.StaffService;
-import com.medilab.service.TrialService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -42,13 +41,12 @@ public class AuthController {
     private final StaffUserRepository staffUserRepository;
     private final PatientRepository patientRepository;
     private final PasswordEncoder passwordEncoder;
-    private final TrialService trialService;
     private final AuditLogService auditLogService;
 
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
         AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
 
@@ -58,7 +56,8 @@ public class AuthController {
                 .anyMatch(role -> role.equals("SYSTEM_ADMIN"));
 
         if (!isSystemAdmin) {
-            labService.findById(user.getLabId()).ifPresent(trialService::assertTrialActive);
+            // labService.findById(user.getLabId()).ifPresent(trialService::assertTrialActive);
+            // Allow login even if expired, read-only mode will be enforced by interceptor
         }
 
         String jwt = jwtUtil.generateToken(user);
@@ -71,12 +70,13 @@ public class AuthController {
     @PostMapping("/patient/login")
     public LoginResponse patientLogin(@Valid @RequestBody PatientLoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getDob().toString()));
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getDob().toString()));
 
         AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
 
         // Ensure lab trial is active for patient's lab as well
-        labService.findById(user.getLabId()).ifPresent(trialService::assertTrialActive);
+        // labService.findById(user.getLabId()).ifPresent(trialService::assertTrialActive);
+        // Patients should always be able to enter the system
 
         String jwt = jwtUtil.generateToken(user);
 
@@ -90,13 +90,13 @@ public class AuthController {
         // Create Lab
         LocalDateTime now = LocalDateTime.now();
         Lab lab = Lab.builder()
-            .name(req.getLabName())
-            .location(req.getLocation())
-            .contactEmail(req.getContactEmail())
-            .licenseNumber(req.getLicenseNumber())
-            .trialStart(now)
-            .trialEnd(now.plusDays(30))
-            .build();
+                .name(req.getLabName())
+                .location(req.getLocation())
+                .contactEmail(req.getContactEmail())
+                .licenseNumber(req.getLicenseNumber())
+                .trialStart(now)
+                .trialEnd(now.plusDays(30))
+                .build();
         Lab savedLab = labService.createLab(lab);
 
         // Create Manager staff via StaffService (this will encode password and set
@@ -115,7 +115,7 @@ public class AuthController {
 
         // Authenticate new user and return token
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(req.getAdminUsername(), req.getAdminPassword()));
+                new UsernamePasswordAuthenticationToken(req.getAdminUsername(), req.getAdminPassword()));
 
         AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
         String jwt = jwtUtil.generateToken(user);
@@ -129,7 +129,7 @@ public class AuthController {
     public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest req) {
         // Authenticate first
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(req.getUsername(), req.getOldPassword()));
+                new UsernamePasswordAuthenticationToken(req.getUsername(), req.getOldPassword()));
         AuthenticatedUser user = (AuthenticatedUser) authentication.getPrincipal();
 
         if ("staff".equals(user.getUserType())) {

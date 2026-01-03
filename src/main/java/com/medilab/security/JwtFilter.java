@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -59,6 +60,8 @@ public class JwtFilter extends OncePerRequestFilter {
             boolean forcePwd = Boolean.TRUE.equals(forceFlag);
             Boolean gdprFlag = claims.get("gdprAccepted", Boolean.class);
             boolean gdprAccepted = Boolean.TRUE.equals(gdprFlag);
+            String trialEndStr = claims.get("trialEnd", String.class);
+            LocalDateTime trialEnd = trialEndStr != null ? LocalDateTime.parse(trialEndStr) : null;
 
             AuthenticatedUser authenticatedUser = new AuthenticatedUser(
                     userId,
@@ -69,7 +72,8 @@ public class JwtFilter extends OncePerRequestFilter {
                     userType,
                     forcePwd,
                     gdprAccepted,
-                    true);
+                    true,
+                    trialEnd);
 
             if (jwtUtil.validateToken(jwt, authenticatedUser)) {
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(

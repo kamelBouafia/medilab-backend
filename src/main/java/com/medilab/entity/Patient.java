@@ -48,7 +48,7 @@ public class Patient {
     @JoinColumn(name = "created_by_id", nullable = false)
     private StaffUser createdBy;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "lab_id", nullable = false)
     private Lab lab;
 
