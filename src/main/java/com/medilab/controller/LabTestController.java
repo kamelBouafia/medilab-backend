@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/lab-tests")
-@PreAuthorize("hasRole('Manager')")
 @RequiredArgsConstructor
 public class LabTestController {
 
     private final LabTestService labTestService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('Manager', 'Technician')")
     public ResponseEntity<Page<LabTestDto>> getLabTests(
             @RequestParam(defaultValue = "1") int _page,
             @RequestParam(defaultValue = "10") int _limit,
@@ -30,11 +30,13 @@ public class LabTestController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<LabTestDto> addLabTest(@Valid @RequestBody LabTestDto labTestDto) {
         return new ResponseEntity<>(labTestService.addLabTest(labTestDto), HttpStatus.CREATED);
     }
 
     @PostMapping("/import")
+    @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<LabTestDto> importTest(
             @RequestParam Long globalTestId,
             @RequestParam java.math.BigDecimal price) {
@@ -42,17 +44,20 @@ public class LabTestController {
     }
 
     @PostMapping("/import-bulk")
+    @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<java.util.List<LabTestDto>> importTests(@RequestBody com.medilab.dto.BulkImportDto request) {
         return new ResponseEntity<>(labTestService.importTestsFromGlobal(request.getItems()), HttpStatus.CREATED);
     }
 
     @PutMapping("/{testId}")
+    @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<LabTestDto> updateLabTest(@PathVariable Long testId,
             @Valid @RequestBody LabTestDto labTestDto) {
         return ResponseEntity.ok(labTestService.updateLabTest(testId, labTestDto));
     }
 
     @DeleteMapping("/{testId}")
+    @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<Void> deleteLabTest(@PathVariable Long testId) {
         labTestService.deleteLabTest(testId);
         return ResponseEntity.noContent().build();

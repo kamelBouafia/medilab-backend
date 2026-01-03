@@ -29,6 +29,7 @@ public class LabController {
                         .licenseNumber(lab.getLicenseNumber())
                         .trialStart(lab.getTrialStart())
                         .trialEnd(lab.getTrialEnd())
+                        .defaultLanguage(lab.getDefaultLanguage())
                         .build())
                 .collect(java.util.stream.Collectors.toList()));
     }
@@ -44,6 +45,66 @@ public class LabController {
                 .licenseNumber(saved.getLicenseNumber())
                 .trialStart(saved.getTrialStart())
                 .trialEnd(saved.getTrialEnd())
+                .defaultLanguage(saved.getDefaultLanguage())
+                .build());
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('SYSTEM_ADMIN')")
+    public ResponseEntity<LabDto> updateLab(@PathVariable Long id, @RequestBody Lab labDetails) {
+        Lab lab = labRepository.findById(id).orElse(null);
+        if (lab == null)
+            return ResponseEntity.notFound().build();
+
+        lab.setName(labDetails.getName());
+        lab.setLocation(labDetails.getLocation());
+        lab.setContactEmail(labDetails.getContactEmail());
+        lab.setLicenseNumber(labDetails.getLicenseNumber());
+        lab.setTrialEnd(labDetails.getTrialEnd());
+        if (labDetails.getDefaultLanguage() != null) {
+            lab.setDefaultLanguage(labDetails.getDefaultLanguage());
+        }
+
+        Lab saved = labRepository.save(lab);
+        return ResponseEntity.ok(LabDto.builder()
+                .id(saved.getId())
+                .name(saved.getName())
+                .location(saved.getLocation())
+                .contactEmail(saved.getContactEmail())
+                .licenseNumber(saved.getLicenseNumber())
+                .trialStart(saved.getTrialStart())
+                .trialEnd(saved.getTrialEnd())
+                .defaultLanguage(saved.getDefaultLanguage())
+                .build());
+    }
+
+    @PatchMapping("/me")
+    @PreAuthorize("hasRole('Manager')")
+    public ResponseEntity<LabDto> updateMyLab(@RequestBody LabDto dto) {
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+        Lab lab = labRepository.findById(user.getLabId()).orElse(null);
+        if (lab == null)
+            return ResponseEntity.notFound().build();
+
+        if (dto.getName() != null)
+            lab.setName(dto.getName());
+        if (dto.getLocation() != null)
+            lab.setLocation(dto.getLocation());
+        if (dto.getContactEmail() != null)
+            lab.setContactEmail(dto.getContactEmail());
+        if (dto.getDefaultLanguage() != null)
+            lab.setDefaultLanguage(dto.getDefaultLanguage());
+
+        Lab saved = labRepository.save(lab);
+        return ResponseEntity.ok(LabDto.builder()
+                .id(saved.getId())
+                .name(saved.getName())
+                .location(saved.getLocation())
+                .contactEmail(saved.getContactEmail())
+                .licenseNumber(saved.getLicenseNumber())
+                .trialStart(saved.getTrialStart())
+                .trialEnd(saved.getTrialEnd())
+                .defaultLanguage(saved.getDefaultLanguage())
                 .build());
     }
 
@@ -63,6 +124,7 @@ public class LabController {
                 .licenseNumber(lab.getLicenseNumber())
                 .trialStart(lab.getTrialStart())
                 .trialEnd(lab.getTrialEnd())
+                .defaultLanguage(lab.getDefaultLanguage())
                 .build();
 
         return ResponseEntity.ok(dto);

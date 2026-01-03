@@ -20,6 +20,9 @@ public class InterpretService {
     @Value("${openrouter.api.key}")
     private String openrouterApiKey;
 
+    @Value("${openrouter.site.url}")
+    private String openrouterSiteUrl;
+
     private final RestClient restClient = RestClient.create();
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -57,7 +60,7 @@ public class InterpretService {
                                     "content", prompt)));
 
             ChatCompletionResponse response = restClient.post()
-                    .uri("https://openrouter.ai/api/v1/chat/completions")
+                    .uri(openrouterSiteUrl)
                     .header("Authorization", "Bearer " + openrouterApiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requestBody)

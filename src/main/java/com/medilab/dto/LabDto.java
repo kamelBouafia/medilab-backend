@@ -15,5 +15,5 @@ public class LabDto {
     private String licenseNumber;
     private LocalDateTime trialStart;
     private LocalDateTime trialEnd;
+    private String defaultLanguage;
 }
-
