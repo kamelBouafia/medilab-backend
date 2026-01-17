@@ -9,9 +9,17 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface InventoryRepository extends JpaRepository<InventoryItem, Long>, JpaSpecificationExecutor<InventoryItem> {
+public interface InventoryRepository
+        extends JpaRepository<InventoryItem, Long>, JpaSpecificationExecutor<InventoryItem> {
     List<InventoryItem> findByLabId(Long labId);
+
     Optional<InventoryItem> findByIdAndLabId(Long id, Long labId);
+
+    @Query("SELECT i FROM InventoryItem i WHERE i.id = :id AND (i.lab.id = :labId OR i.lab.parentLab.id = :labId)")
+    Optional<InventoryItem> findByIdAndHierarchicalLabId(Long id, Long labId);
+
+    @Query("SELECT count(i) FROM InventoryItem i WHERE (i.lab.id = :labId OR i.lab.parentLab.id = :labId) AND i.quantity < i.lowStockThreshold")
+    long countByHierarchicalLabIdAndQuantityLessThanLowStockThreshold(@Param("labId") Long labId);
 
     @Query("SELECT count(i) FROM InventoryItem i WHERE i.lab.id = :labId AND i.quantity < i.lowStockThreshold")
     long countByLabIdAndQuantityLessThanLowStockThreshold(@Param("labId") Long labId);

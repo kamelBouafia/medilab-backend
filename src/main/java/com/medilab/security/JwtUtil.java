@@ -61,6 +61,7 @@ public class JwtUtil {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", authenticatedUser.getId());
         claims.put("labId", authenticatedUser.getLabId());
+        claims.put("parentLabId", authenticatedUser.getParentLabId());
         claims.put("username", authenticatedUser.getUsername()); // Added username as a custom claim
         claims.put("authorities", authenticatedUser.getAuthorities().stream().map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList()));

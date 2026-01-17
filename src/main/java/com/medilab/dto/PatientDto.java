@@ -37,5 +37,6 @@ public class PatientDto {
     private String allergies;
     private Long createdById;
     private Long labId;
+    private String labName;
     private boolean gdprAccepted;
 }

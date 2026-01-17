@@ -16,6 +16,7 @@ public class AuthenticatedUser implements UserDetails {
     @NonNull
     private final Long id;
     private final Long labId;
+    private final Long parentLabId;
     private final String username;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;

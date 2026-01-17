@@ -11,4 +11,5 @@ public class InventoryItemDto {
     private int lowStockThreshold;
     private String supplier;
     private Long addedById;
+    private String labName;
 }

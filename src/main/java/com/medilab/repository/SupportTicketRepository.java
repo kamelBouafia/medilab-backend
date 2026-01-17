@@ -10,25 +10,26 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface SupportTicketRepository extends JpaRepository<SupportTicket, Long> {
-        @Query("""
-                        SELECT new com.medilab.entity.SupportTicket(
-                            t.id, t.ticketId, t.name, t.email, t.subject,
-                            t.labId, t.userId, t.status, t.createdAt
-                        )
-                        FROM SupportTicket t
-                        WHERE (:labId IS NULL OR t.labId = :labId)
-                          AND (:status IS NULL OR t.status = :status)
-                          AND (:userId IS NULL OR t.userId = :userId)
-                          AND (
-                                :q IS NULL OR :q = ''
-                                OR t.name    ILIKE CONCAT('%', :q, '%')
-                                OR t.email   ILIKE CONCAT('%', :q, '%')
-                                OR t.subject ILIKE CONCAT('%', :q, '%')
-                              )
-                        """)
-        Page<SupportTicket> search(@Param("q") String q,
-                        @Param("labId") Long labId,
-                        @Param("status") String status,
-                        @Param("userId") Long userId,
-                        Pageable pageable);
+  @Query("""
+      SELECT new com.medilab.entity.SupportTicket(
+          t.id, t.ticketId, t.name, t.email, t.subject,
+          t.labId, t.userId, t.status, t.createdAt
+      )
+      FROM SupportTicket t, Lab l
+      WHERE t.labId = l.id
+        AND (:labId IS NULL OR t.labId = :labId OR l.parentLab.id = :labId)
+        AND (:status IS NULL OR t.status = :status)
+        AND (:userId IS NULL OR t.userId = :userId)
+        AND (
+              :q IS NULL OR :q = ''
+              OR t.name    ILIKE CONCAT('%', :q, '%')
+              OR t.email   ILIKE CONCAT('%', :q, '%')
+              OR t.subject ILIKE CONCAT('%', :q, '%')
+            )
+      """)
+  Page<SupportTicket> search(@Param("q") String q,
+      @Param("labId") Long labId,
+      @Param("status") String status,
+      @Param("userId") Long userId,
+      Pageable pageable);
 }

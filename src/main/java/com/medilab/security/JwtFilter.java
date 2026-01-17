@@ -44,6 +44,7 @@ public class JwtFilter extends OncePerRequestFilter {
             Claims claims = jwtUtil.extractAllClaims(jwt);
             Long userId = claims.get("userId", Long.class);
             Long labId = claims.get("labId", Long.class);
+            Long parentLabId = claims.get("parentLabId", Long.class);
 
             // Read authorities safely
             Object authObj = claims.get("authorities");
@@ -66,6 +67,7 @@ public class JwtFilter extends OncePerRequestFilter {
             AuthenticatedUser authenticatedUser = new AuthenticatedUser(
                     userId,
                     labId,
+                    parentLabId,
                     username,
                     null, // Password is not needed in the context
                     authoritiesList.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList()),

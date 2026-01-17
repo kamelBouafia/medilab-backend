@@ -9,4 +9,6 @@ import java.time.LocalDateTime;
 @Repository
 public interface LabRepository extends JpaRepository<Lab, Long> {
     long countByTrialEndAfter(LocalDateTime now);
+
+    boolean existsByParentLabId(Long parentLabId);
 }

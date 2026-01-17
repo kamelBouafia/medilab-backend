@@ -30,24 +30,25 @@ public class DashboardService {
                 AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
                 Long labId = user.getLabId();
 
-                long pendingTests = requisitionRepository.countByLabIdAndStatusIn(labId,
+                long pendingTests = requisitionRepository.countByHierarchicalLabIdAndStatusIn(labId,
                                 Arrays.asList(SampleStatus.COLLECTED, SampleStatus.IN_TRANSIT,
                                                 SampleStatus.PROCESSING));
 
-                long completedToday = requisitionRepository.countByLabIdAndStatusAndCompletionDateBetween(
+                long completedToday = requisitionRepository.countByHierarchicalLabIdAndStatusAndCompletionDateBetween(
                                 labId,
                                 SampleStatus.COMPLETED,
                                 LocalDate.now().atStartOfDay(),
                                 LocalDate.now().atTime(LocalTime.MAX));
 
-                long lowStockItems = inventoryRepository.countByLabIdAndQuantityLessThanLowStockThreshold(labId);
+                long lowStockItems = inventoryRepository
+                                .countByHierarchicalLabIdAndQuantityLessThanLowStockThreshold(labId);
 
                 // Calculate date range for last 7 days (inclusive of today)
                 // Ensure we work with OffsetDateTime for the repository query
                 OffsetDateTime end = OffsetDateTime.now();
                 OffsetDateTime start = end.minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);
 
-                List<DailyVolumeDto> volume = requisitionRepository.findDailyRequestVolume(labId,
+                List<DailyVolumeDto> volume = requisitionRepository.findHierarchicalDailyRequestVolume(labId,
                                 start, end);
 
                 // Fill in missing days with 0

@@ -36,4 +36,5 @@ public class LabTestDto {
     private Double criticalMinVal;
     private Double criticalMaxVal;
     private String result;
+    private String labName;
 }

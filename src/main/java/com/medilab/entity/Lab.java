@@ -42,4 +42,8 @@ public class Lab {
     @Column(name = "default_language", length = 5, nullable = false)
     @Builder.Default
     private String defaultLanguage = "en";
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_lab_id")
+    private Lab parentLab;
 }

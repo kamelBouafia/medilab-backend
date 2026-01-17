@@ -25,6 +25,9 @@ public class StaffUserDetailsService implements UserDetailsService {
         return new AuthenticatedUser(
                 staffUser.getId(),
                 staffUser.getLab() == null ? null : staffUser.getLab().getId(),
+                (staffUser.getLab() != null && staffUser.getLab().getParentLab() != null)
+                        ? staffUser.getLab().getParentLab().getId()
+                        : null,
                 staffUser.getUsername(),
                 staffUser.getPassword(),
                 List.of(new SimpleGrantedAuthority(staffUser.getRole().name())),

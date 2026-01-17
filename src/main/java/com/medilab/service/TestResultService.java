@@ -49,6 +49,10 @@ public class TestResultService {
             return Collections.emptyList();
 
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+        if (user.getParentLabId() != null) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Branch labs cannot enter or edit results.");
+        }
         Long requisitionId = testResultDtos.getFirst().getRequisitionId();
 
         Requisition requisition = requisitionRepository.findById(requisitionId)
@@ -77,8 +81,8 @@ public class TestResultService {
     }
 
     private TestResult processTestResult(TestResultDto dto, Map<Long, TestResult> existingMap,
-                                         Map<Long, LabTest> testMap, Requisition requisition,
-                                         Lab lab, StaffUser enteredBy) {
+            Map<Long, LabTest> testMap, Requisition requisition,
+            Lab lab, StaffUser enteredBy) {
         LabTest labTest = testMap.get(dto.getTestId());
         if (labTest == null)
             return null;
@@ -223,13 +227,15 @@ public class TestResultService {
                                 r.getMaxVal() != null ? r.getMaxVal() : "N/A", unit));
                     }
                     if (r.getAbnormalMin() != null || r.getAbnormalMax() != null) {
-                        if (sb.length() > 0) sb.append("\n");
+                        if (sb.length() > 0)
+                            sb.append("\n");
                         sb.append(String.format("Abnormal: <%s or >%s%s",
                                 r.getAbnormalMin() != null ? r.getAbnormalMin() : "N/A",
                                 r.getAbnormalMax() != null ? r.getAbnormalMax() : "N/A", unit));
                     }
                     if (r.getCriticalMin() != null || r.getCriticalMax() != null) {
-                        if (sb.length() > 0) sb.append("\n");
+                        if (sb.length() > 0)
+                            sb.append("\n");
                         sb.append(String.format("Critical: <%s or >%s%s",
                                 r.getCriticalMin() != null ? r.getCriticalMin() : "N/A",
                                 r.getCriticalMax() != null ? r.getCriticalMax() : "N/A", unit));
@@ -274,7 +280,7 @@ public class TestResultService {
                             return TestResultFlag.HIGH;
                         if (r.getAbnormalMin() != null && value < r.getAbnormalMin())
                             return TestResultFlag.LOW;
-        if (r.getMaxVal() != null && value > r.getMaxVal())
+                        if (r.getMaxVal() != null && value > r.getMaxVal())
                             return TestResultFlag.HIGH;
                         if (r.getMinVal() != null && value < r.getMinVal())
                             return TestResultFlag.LOW;

@@ -4,6 +4,7 @@ import com.medilab.dto.CreateStaffRequest;
 import com.medilab.dto.StaffUserDto;
 import com.medilab.entity.Lab;
 import com.medilab.entity.StaffUser;
+import com.medilab.exception.ResourceNotFoundException;
 import com.medilab.mapper.StaffUserMapper;
 import com.medilab.security.AuthenticatedUser;
 import com.medilab.security.SecurityUtils;
@@ -52,7 +53,31 @@ public class StaffManagementController {
         AuthenticatedUser auth = SecurityUtils.getAuthenticatedUser();
         boolean isSysAdmin = auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("SYSTEM_ADMIN"));
 
-        Long finalLabId = isSysAdmin ? req.getLabId() : auth.getLabId();
+        if (!isSysAdmin && auth.getParentLabId() != null) {
+            throw new org.springframework.security.access.AccessDeniedException("Branch labs cannot manage staff.");
+        }
+
+        Long requestedLabId = req.getLabId();
+        Long finalLabId;
+        if (isSysAdmin) {
+            finalLabId = requestedLabId;
+        } else {
+            // Manager
+            if (requestedLabId == null || requestedLabId.equals(auth.getLabId())) {
+                finalLabId = auth.getLabId();
+            } else {
+                // Check if requestedLabId is a branch of auth.getLabId()
+                Lab requestedLab = labService.findById(requestedLabId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Lab not found"));
+                if (requestedLab.getParentLab() != null
+                        && requestedLab.getParentLab().getId().equals(auth.getLabId())) {
+                    finalLabId = requestedLabId;
+                } else {
+                    throw new org.springframework.security.access.AccessDeniedException(
+                            "You can only add staff to your own lab or its branches.");
+                }
+            }
+        }
 
         Lab lab = null;
         if (finalLabId != null) {

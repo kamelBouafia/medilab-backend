@@ -16,4 +16,5 @@ public class LabDto {
     private LocalDateTime trialStart;
     private LocalDateTime trialEnd;
     private String defaultLanguage;
+    private Long parentLabId;
 }

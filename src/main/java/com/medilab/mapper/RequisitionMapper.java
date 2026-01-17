@@ -11,6 +11,8 @@ public abstract class RequisitionMapper {
     @Mapping(source = "patient.id", target = "patientId")
     @Mapping(source = "patient.name", target = "patientName")
     @Mapping(source = "createdBy.id", target = "createdById")
+    @Mapping(source = "lab.id", target = "labId")
+    @Mapping(source = "lab.name", target = "labName")
     @Mapping(target = "tests", ignore = true)
     public abstract RequisitionDto toDto(Requisition requisition);
 

@@ -16,6 +16,9 @@ public interface LabTestRepository extends JpaRepository<LabTest, Long>, JpaSpec
 
     Optional<LabTest> findByIdAndLabId(Long id, Long labId);
 
+    @Query("SELECT lt FROM LabTest lt WHERE lt.id = :id AND (lt.lab.id = :labId OR lt.lab.parentLab.id = :labId)")
+    Optional<LabTest> findByIdAndHierarchicalLabId(Long id, Long labId);
+
     Optional<LabTest> findByGlobalTestIdAndLabId(Long globalTestId, Long labId);
 
     @Query("SELECT lt FROM LabTest lt LEFT JOIN FETCH lt.referenceRanges WHERE lt.id IN :ids")

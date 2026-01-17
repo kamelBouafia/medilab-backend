@@ -186,7 +186,14 @@ public class SupportServiceImpl implements SupportService {
             }
         } else { // staff
             if (!authenticatedUser.getLabId().equals(ticket.getLabId())) {
-                throw new AccessDeniedException("You are not authorized to perform this action on this ticket.");
+                // Check if it's a branch lab of the user's lab
+                boolean isBranch = labRepository.findById(ticket.getLabId())
+                        .map(lab -> lab.getParentLab() != null
+                                && lab.getParentLab().getId().equals(authenticatedUser.getLabId()))
+                        .orElse(false);
+                if (!isBranch) {
+                    throw new AccessDeniedException("You are not authorized to perform this action on this ticket.");
+                }
             }
         }
     }

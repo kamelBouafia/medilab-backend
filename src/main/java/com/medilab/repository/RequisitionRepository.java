@@ -32,8 +32,31 @@ public interface RequisitionRepository extends JpaRepository<Requisition, Long>,
         @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests WHERE r.lab.id = :labId")
         List<Requisition> findByLabIdWithTests(Long labId);
 
-        @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests LEFT JOIN FETCH r.testResults WHERE r.id = :id AND r.lab.id = :labId")
-        Optional<Requisition> findByIdAndLabIdWithTestsAndResults(Long id, Long labId);
+        @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests LEFT JOIN FETCH r.testResults WHERE r.id = :id AND (r.lab.id = :labId OR r.lab.parentLab.id = :labId)")
+        Optional<Requisition> findByIdAndHierarchicalLabIdWithTestsAndResults(Long id, Long labId);
+
+        @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests LEFT JOIN FETCH r.testResults WHERE r.patient.id = :patientId AND (r.lab.id = :labId OR r.lab.parentLab.id = :labId)")
+        Page<Requisition> findByPatientIdAndHierarchicalLabIdWithTestsAndResults(Long patientId, Long labId,
+                        Pageable pageable);
+
+        @Query("SELECT r FROM Requisition r WHERE r.id = :id AND (r.lab.id = :labId OR r.lab.parentLab.id = :labId)")
+        Optional<Requisition> findByIdAndHierarchicalLabId(Long id, Long labId);
+
+        @Query("SELECT COUNT(r) FROM Requisition r WHERE (r.lab.id = :labId OR r.lab.parentLab.id = :labId) AND r.status IN :statuses")
+        long countByHierarchicalLabIdAndStatusIn(Long labId, Collection<SampleStatus> statuses);
+
+        @Query("SELECT COUNT(r) FROM Requisition r WHERE (r.lab.id = :labId OR r.lab.parentLab.id = :labId) AND r.status = :status AND r.completionDate BETWEEN :start AND :end")
+        long countByHierarchicalLabIdAndStatusAndCompletionDateBetween(Long labId, SampleStatus status,
+                        LocalDateTime start,
+                        LocalDateTime end);
+
+        @Query("SELECT new com.medilab.dto.DailyVolumeDto(CAST(r.date AS LocalDate), COUNT(r)) " +
+                        "FROM Requisition r " +
+                        "WHERE (r.lab.id = :labId OR r.lab.parentLab.id = :labId) AND r.date BETWEEN :start AND :end " +
+                        "GROUP BY CAST(r.date AS LocalDate) " +
+                        "ORDER BY CAST(r.date AS LocalDate) ASC")
+        List<DailyVolumeDto> findHierarchicalDailyRequestVolume(Long labId,
+                        java.time.OffsetDateTime start, java.time.OffsetDateTime end);
 
         long countByLabIdAndStatus(Long labId, SampleStatus status);
 

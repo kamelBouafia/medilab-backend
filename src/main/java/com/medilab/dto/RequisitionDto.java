@@ -31,6 +31,8 @@ public class RequisitionDto {
     private Set<LabTestDto> tests;
     private String status;
     private Long createdById;
+    private Long labId;
+    private String labName;
     private String pdfObjectPath;
     private String pdfGeneratedAt;
 }

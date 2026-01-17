@@ -42,7 +42,19 @@ public class LabTestService {
                 Sort.Direction direction = Sort.Direction.fromString(order);
                 Pageable pageable = PageRequest.of(Math.max(0, page - 1), limit, Sort.by(direction, sort));
 
-                Specification<LabTest> spec = (root, query, cb) -> cb.equal(root.get("lab").get("id"), user.getLabId());
+                Specification<LabTest> spec = (root, query, cb) -> {
+                        if (user.getParentLabId() == null) {
+                                // Main Lab: see own and branches
+                                return cb.or(
+                                                cb.equal(root.get("lab").get("id"), user.getLabId()),
+                                                cb.equal(root.get("lab").get("parentLab").get("id"), user.getLabId()));
+                        } else {
+                                // Branch Lab: see own and parent's
+                                return cb.or(
+                                                cb.equal(root.get("lab").get("id"), user.getLabId()),
+                                                cb.equal(root.get("lab").get("id"), user.getParentLabId()));
+                        }
+                };
 
                 if (StringUtils.hasText(q)) {
                         spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")),
@@ -55,6 +67,10 @@ public class LabTestService {
         @Transactional
         public LabTestDto addLabTest(LabTestDto labTestDto) {
                 AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+                if (user.getParentLabId() != null) {
+                        throw new org.springframework.security.access.AccessDeniedException(
+                                        "Branch labs cannot manage lab tests.");
+                }
                 LabTest labTest = labTestMapper.toEntity(labTestDto);
                 Lab lab = labRepository.findById(user.getLabId())
                                 .orElseThrow(() -> new ResourceNotFoundException("Lab not found"));
@@ -75,7 +91,7 @@ public class LabTestService {
         @Transactional
         public LabTestDto updateLabTest(Long testId, LabTestDto labTestDto) {
                 AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
-                LabTest existingLabTest = labTestRepository.findByIdAndLabId(testId, user.getLabId())
+                LabTest existingLabTest = labTestRepository.findByIdAndHierarchicalLabId(testId, user.getLabId())
                                 .orElseThrow(() -> new ResourceNotFoundException("LabTest not found"));
 
                 labTestMapper.updateEntityFromDto(labTestDto, existingLabTest);
@@ -91,7 +107,7 @@ public class LabTestService {
         @Transactional
         public void deleteLabTest(Long testId) {
                 AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
-                LabTest existingLabTest = labTestRepository.findByIdAndLabId(testId, user.getLabId())
+                LabTest existingLabTest = labTestRepository.findByIdAndHierarchicalLabId(testId, user.getLabId())
                                 .orElseThrow(() -> new ResourceNotFoundException("LabTest not found"));
 
                 labTestRepository.delete(existingLabTest);
@@ -125,6 +141,10 @@ public class LabTestService {
         @Transactional
         public LabTestDto importTestFromGlobal(Long globalTestId, java.math.BigDecimal price) {
                 AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+                if (user.getParentLabId() != null) {
+                        throw new org.springframework.security.access.AccessDeniedException(
+                                        "Branch labs cannot manage lab tests.");
+                }
                 GlobalTestCatalog globalTest = globalTestCatalogRepository.findById(globalTestId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Global Test not found"));
 

@@ -34,7 +34,18 @@ public class InventoryService {
         Pageable pageable = PageRequest.of(page > 0 ? page - 1 : 0, limit, Sort.by(direction, sort));
 
         Specification<InventoryItem> spec = Specification
-                .where((root, query, cb) -> cb.equal(root.get("lab").get("id"), user.getLabId()));
+                .where((root, query, cb) -> {
+                    if (user.getParentLabId() == null) {
+                        return cb.or(
+                                cb.equal(root.get("lab").get("id"), user.getLabId()),
+                                cb.equal(root.get("lab").get("parentLab").get("id"), user.getLabId()));
+                    } else {
+                        // Branch Lab: see own and parent's
+                        return cb.or(
+                                cb.equal(root.get("lab").get("id"), user.getLabId()),
+                                cb.equal(root.get("lab").get("id"), user.getParentLabId()));
+                    }
+                });
 
         if (StringUtils.hasText(q)) {
             spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + q.toLowerCase() + "%"));
@@ -45,6 +56,9 @@ public class InventoryService {
 
     public InventoryItemDto createInventoryItem(InventoryItemDto inventoryItemDto) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+        if (user.getParentLabId() != null) {
+            throw new org.springframework.security.access.AccessDeniedException("Branch labs cannot manage inventory.");
+        }
         InventoryItem inventoryItem = inventoryItemMapper.toEntity(inventoryItemDto);
 
         labRepository.findById(user.getLabId()).ifPresent(inventoryItem::setLab);
@@ -58,7 +72,10 @@ public class InventoryService {
 
     public InventoryItemDto updateInventoryItem(Long id, InventoryItemDto inventoryItemDto) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
-        InventoryItem existingInventoryItem = inventoryRepository.findByIdAndLabId(id, user.getLabId())
+        if (user.getParentLabId() != null) {
+            throw new org.springframework.security.access.AccessDeniedException("Branch labs cannot manage inventory.");
+        }
+        InventoryItem existingInventoryItem = inventoryRepository.findByIdAndHierarchicalLabId(id, user.getLabId())
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory item not found"));
 
         existingInventoryItem.setName(inventoryItemDto.getName());
@@ -75,7 +92,10 @@ public class InventoryService {
 
     public void deleteInventoryItem(Long id) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
-        InventoryItem existingInventoryItem = inventoryRepository.findByIdAndLabId(id, user.getLabId())
+        if (user.getParentLabId() != null) {
+            throw new org.springframework.security.access.AccessDeniedException("Branch labs cannot manage inventory.");
+        }
+        InventoryItem existingInventoryItem = inventoryRepository.findByIdAndHierarchicalLabId(id, user.getLabId())
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory item not found"));
 
         inventoryRepository.deleteById(id);

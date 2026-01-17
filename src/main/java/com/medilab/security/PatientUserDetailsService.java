@@ -27,6 +27,7 @@ public class PatientUserDetailsService implements UserDetailsService {
         return new AuthenticatedUser(
                 patient.getId(),
                 patient.getLab().getId(),
+                patient.getLab().getParentLab() != null ? patient.getLab().getParentLab().getId() : null,
                 patient.getUsername(),
                 patient.getDob().toString(),
                 List.of(new SimpleGrantedAuthority("ROLE_PATIENT")),

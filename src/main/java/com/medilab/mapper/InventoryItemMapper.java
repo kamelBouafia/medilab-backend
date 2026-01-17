@@ -9,6 +9,7 @@ import org.mapstruct.Mapping;
 public interface InventoryItemMapper {
 
     @Mapping(source = "addedBy.id", target = "addedById")
+    @Mapping(source = "lab.name", target = "labName")
     InventoryItemDto toDto(InventoryItem inventoryItem);
 
     @Mapping(target = "addedBy", ignore = true)

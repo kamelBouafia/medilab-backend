@@ -9,6 +9,7 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface LabTestMapper {
 
+    @Mapping(source = "lab.name", target = "labName")
     LabTestDto toDto(LabTest labTest);
 
     @Mapping(target = "lab", ignore = true)

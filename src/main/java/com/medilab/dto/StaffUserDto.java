@@ -22,6 +22,7 @@ public class StaffUserDto {
 
     @NotNull(message = "{validation.required}")
     private Long labId;
+    private String labName;
     private String username;
     private String email;
     private String phone;

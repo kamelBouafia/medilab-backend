@@ -40,7 +40,17 @@ public class PatientService {
         Sort.Direction direction = Sort.Direction.fromString(order);
         Pageable pageable = PageRequest.of(Math.max(0, page - 1), limit, Sort.by(direction, sort));
 
-        Specification<Patient> spec = (root, query, cb) -> cb.equal(root.get("lab").get("id"), user.getLabId());
+        Specification<Patient> spec = (root, query, cb) -> {
+            if (user.getParentLabId() == null) {
+                // Main Lab: see own and branches
+                return cb.or(
+                        cb.equal(root.get("lab").get("id"), user.getLabId()),
+                        cb.equal(root.get("lab").get("parentLab").get("id"), user.getLabId()));
+            } else {
+                // Branch Lab: see only own
+                return cb.equal(root.get("lab").get("id"), user.getLabId());
+            }
+        };
 
         if (StringUtils.hasText(q)) {
             String search = "%" + q.toLowerCase() + "%";
@@ -100,7 +110,7 @@ public class PatientService {
     @Transactional(readOnly = true)
     public PatientDto getPatientById(Long patientId) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
-        return patientRepository.findByIdAndLabId(patientId, user.getLabId())
+        return patientRepository.findByIdAndHierarchicalLabId(patientId, user.getLabId())
                 .map(patientMapper::toDto)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
     }
@@ -108,7 +118,7 @@ public class PatientService {
     @Transactional
     public PatientDto updatePatient(Long patientId, PatientDto patientDto) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
-        Patient existingPatient = patientRepository.findByIdAndLabId(patientId, user.getLabId())
+        Patient existingPatient = patientRepository.findByIdAndHierarchicalLabId(patientId, user.getLabId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
 
         patientMapper.updatePatientFromDto(patientDto, existingPatient);
@@ -123,7 +133,7 @@ public class PatientService {
     @Transactional
     public void deletePatient(Long patientId) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
-        Patient patient = patientRepository.findByIdAndLabId(patientId, user.getLabId())
+        Patient patient = patientRepository.findByIdAndHierarchicalLabId(patientId, user.getLabId())
                 .orElseThrow(() -> new ResourceNotFoundException("Patient not found"));
 
         // GDPR Right to be Forgotten: Anonymize sensitive PII while keeping clinical

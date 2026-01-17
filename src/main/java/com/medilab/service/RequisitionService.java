@@ -61,17 +61,18 @@ public class RequisitionService {
             try {
                 Long patientId = Long.valueOf(params.getFirst("patientId"));
                 return requisitionRepository
-                        .findByPatientIdAndLabIdWithTestsAndResults(patientId, user.getLabId(), pageable)
+                        .findByPatientIdAndHierarchicalLabIdWithTestsAndResults(patientId, user.getLabId(), pageable)
                         .map(requisitionMapper::toDto);
             } catch (NumberFormatException ignored) {
             }
         }
 
-        Specification<Requisition> spec = createSpecification(user.getLabId(), q, params);
+        Specification<Requisition> spec = createSpecification(user, q, params);
         return requisitionRepository.findAll(spec, pageable).map(requisitionMapper::toDto);
     }
 
-    private Specification<Requisition> createSpecification(Long labId, String q, MultiValueMap<String, String> params) {
+    private Specification<Requisition> createSpecification(AuthenticatedUser user, String q,
+            MultiValueMap<String, String> params) {
         return (root, query, cb) -> {
             if (query.getResultType().equals(Requisition.class)) {
                 root.fetch("patient", JoinType.LEFT);
@@ -80,7 +81,15 @@ public class RequisitionService {
             query.distinct(true);
 
             List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.equal(root.get("lab").get("id"), labId));
+            if (user.getParentLabId() == null) {
+                // User is in a Main Lab: see own lab + all branch labs
+                predicates.add(cb.or(
+                        cb.equal(root.get("lab").get("id"), user.getLabId()),
+                        cb.equal(root.get("lab").get("parentLab").get("id"), user.getLabId())));
+            } else {
+                // User is in a Branch Lab: see only their own lab's data
+                predicates.add(cb.equal(root.get("lab").get("id"), user.getLabId()));
+            }
 
             if (StringUtils.hasText(q)) {
                 predicates.add(cb.like(cb.lower(root.get("patient").get("name")), "%" + q.toLowerCase() + "%"));
@@ -158,7 +167,7 @@ public class RequisitionService {
     @Transactional(readOnly = true)
     public RequisitionDto getRequisitionById(Long id) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
-        return requisitionRepository.findByIdAndLabIdWithTestsAndResults(id, user.getLabId())
+        return requisitionRepository.findByIdAndHierarchicalLabIdWithTestsAndResults(id, user.getLabId())
                 .map(requisitionMapper::toDto)
                 .orElseThrow(() -> new ResourceNotFoundException("Requisition not found with id: " + id));
     }
@@ -182,7 +191,8 @@ public class RequisitionService {
     }
 
     @Transactional
-    public RequisitionDto updateRequisitionStatus(Long requisitionId, @NotNull(message = "Status cannot be null") SampleStatus newStatus) {
+    public RequisitionDto updateRequisitionStatus(Long requisitionId,
+            @NotNull(message = "Status cannot be null") SampleStatus newStatus) {
         Requisition requisition = requisitionRepository.findById(requisitionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Requisition not found with id: " + requisitionId));
 
@@ -201,7 +211,7 @@ public class RequisitionService {
 
     public String getReportUrl(Long requisitionId) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
-        Requisition requisition = requisitionRepository.findByIdAndLabId(requisitionId, user.getLabId())
+        Requisition requisition = requisitionRepository.findByIdAndHierarchicalLabId(requisitionId, user.getLabId())
                 .orElseThrow(() -> new ResourceNotFoundException("Requisition not found"));
 
         if (requisition.getPdfObjectPath() == null) {
@@ -215,7 +225,7 @@ public class RequisitionService {
     @Transactional
     public void resendReport(Long requisitionId) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
-        Requisition requisition = requisitionRepository.findByIdAndLabId(requisitionId, user.getLabId())
+        Requisition requisition = requisitionRepository.findByIdAndHierarchicalLabId(requisitionId, user.getLabId())
                 .orElseThrow(() -> new ResourceNotFoundException("Requisition not found"));
 
         if (requisition.getPdfObjectPath() == null) {

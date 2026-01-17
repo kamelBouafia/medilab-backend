@@ -45,6 +45,7 @@ public class ConsentController {
         AuthenticatedUser updatedUser = new AuthenticatedUser(
                 user.getId(),
                 user.getLabId(),
+                user.getParentLabId(),
                 user.getUsername(),
                 user.getPassword(),
                 user.getAuthorities(),

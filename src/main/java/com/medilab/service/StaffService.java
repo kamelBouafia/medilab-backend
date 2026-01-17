@@ -42,7 +42,13 @@ public class StaffService {
                 baseSpec = baseSpec.and((r, qry, c) -> c.equal(r.get("enabled"), true));
             }
             if (labId != null) {
-                baseSpec = baseSpec.and((r, qry, c) -> c.equal(r.get("lab").get("id"), labId));
+                baseSpec = baseSpec.and((r, qry, c) -> {
+                    // We need to fetch the parent lab to check if it matches labId
+                    // Or more simply: r.lab.id = labId OR r.lab.parentLab.id = labId
+                    return cb.or(
+                            cb.equal(r.get("lab").get("id"), labId),
+                            cb.equal(r.get("lab").get("parentLab").get("id"), labId));
+                });
             }
             return baseSpec.toPredicate(root, query, cb);
         };
@@ -96,15 +102,12 @@ public class StaffService {
 
     @Transactional
     public StaffUser updateStaff(Long staffId, CreateStaffRequest req, Long labId) {
-        StaffUser staff = staffUserRepository.findById(staffId)
-                .orElseThrow(() -> new IllegalArgumentException("Staff user not found"));
-
-        if (labId != null) {
-            // If labId is provided, enforce it (Manager case)
-            if (staff.getLab() == null || !staff.getLab().getId().equals(labId)) {
-                throw new IllegalArgumentException("Unauthorized: Staff does not belong to your lab");
-            }
-        }
+        StaffUser staff = (labId == null)
+                ? staffUserRepository.findById(staffId)
+                        .orElseThrow(() -> new IllegalArgumentException("Staff user not found"))
+                : staffUserRepository.findByIdAndHierarchicalLabId(staffId, labId)
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Unauthorized: Staff does not belong to your lab or branch"));
 
         staff.setName(req.getName());
         staff.setEmail(req.getEmail());
@@ -122,14 +125,12 @@ public class StaffService {
 
     @Transactional
     public void deleteStaff(Long staffId, Long labId) {
-        StaffUser staff = staffUserRepository.findById(staffId)
-                .orElseThrow(() -> new IllegalArgumentException("Staff user not found"));
-
-        if (labId != null) {
-            if (staff.getLab() == null || !staff.getLab().getId().equals(labId)) {
-                throw new IllegalArgumentException("Unauthorized: Staff does not belong to your lab");
-            }
-        }
+        StaffUser staff = (labId == null)
+                ? staffUserRepository.findById(staffId)
+                        .orElseThrow(() -> new IllegalArgumentException("Staff user not found"))
+                : staffUserRepository.findByIdAndHierarchicalLabId(staffId, labId)
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Unauthorized: Staff does not belong to your lab or branch"));
 
         staff.setEnabled(false);
         staff.setUsername(staff.getUsername() + "_del_" + System.currentTimeMillis());
