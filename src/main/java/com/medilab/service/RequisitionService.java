@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -219,7 +220,14 @@ public class RequisitionService {
         }
 
         String bucketName = "lab-" + requisition.getLab().getId() + "-reports";
-        return minIOService.getPresignedUrl(bucketName, requisition.getPdfObjectPath());
+        String baseUrl = null;
+        try {
+            baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+        } catch (Exception e) {
+            log.warn("Could not determine dynamic base URL, falling back to public endpoint.");
+        }
+
+        return minIOService.getPresignedUrl(bucketName, requisition.getPdfObjectPath(), baseUrl);
     }
 
     @Transactional
@@ -233,7 +241,13 @@ public class RequisitionService {
         }
 
         String bucketName = "lab-" + requisition.getLab().getId() + "-reports";
-        String pdfUrl = minIOService.getPresignedUrl(bucketName, requisition.getPdfObjectPath());
+        String baseUrl = null;
+        try {
+            baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+        } catch (Exception ignored) {
+        }
+
+        String pdfUrl = minIOService.getPresignedUrl(bucketName, requisition.getPdfObjectPath(), baseUrl);
 
         NotificationRequestDTO notification = new NotificationRequestDTO();
         notification.setType("EMAIL");

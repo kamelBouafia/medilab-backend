@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -140,7 +141,14 @@ public class TestResultService {
             requisition.setPdfGeneratedAt(LocalDateTime.now());
             requisitionRepository.save(requisition);
 
-            String pdfUrl = minIOService.getPresignedUrl(bucketName, objectPath);
+            String baseUrl = null;
+            try {
+                baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+            } catch (Exception e) {
+                log.warn("Could not determine dynamic base URL, falling back to public endpoint.");
+            }
+
+            String pdfUrl = minIOService.getPresignedUrl(bucketName, objectPath, baseUrl);
             sendReportNotification(requisition, pdfUrl);
         } catch (Exception e) {
             log.error("Error generating PDF report for Requisition ID: {}", requisition.getId(), e);
