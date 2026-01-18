@@ -82,12 +82,17 @@ public class MinIOService {
      * @return The presigned URL valid for configured hours
      */
     public String getPresignedUrl(String bucketName, String objectName) {
+        return getPresignedUrl(bucketName, objectName, null);
+    }
+
+    public String getPresignedUrl(String bucketName, String objectName, String baseUrl) {
         try {
             String targetBucket = (bucketName != null && !bucketName.isEmpty()) ? bucketName : defaultBucketName;
+            String endpointToUse = (baseUrl != null && !baseUrl.isEmpty()) ? baseUrl : publicEndpoint;
 
             // Create a separate client with public endpoint for URL generation
             MinioClient publicClient = MinioClient.builder()
-                    .endpoint(publicEndpoint)
+                    .endpoint(endpointToUse)
                     .credentials(accessKey, secretKey)
                     .region("us-east-1")
                     .build();
@@ -100,7 +105,7 @@ public class MinIOService {
                             .expiry(urlExpiryHours, TimeUnit.HOURS)
                             .build());
 
-            log.debug("Generated presigned URL for: {}", objectName);
+            log.debug("Generated presigned URL for: {} using endpoint: {}", objectName, endpointToUse);
             return url;
         } catch (Exception e) {
             log.error("Error generating presigned URL", e);
