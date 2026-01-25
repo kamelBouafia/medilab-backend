@@ -37,5 +37,10 @@ public class TestResultDto {
 
     private String interpretation;
     private TestResultFlag flag;
+    private com.medilab.enums.TestType testType;
+    private String partnerLabName;
+    private String requestingLabName;
+    private com.medilab.enums.TestResultStatus status;
+    private Boolean canEdit;
     private Long enteredById;
 }

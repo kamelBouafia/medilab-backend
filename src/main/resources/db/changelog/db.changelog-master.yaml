@@ -47,3 +47,18 @@ databaseChangeLog:
   - include:
       file: changes/15-add-branch-lab-support.sql
       relativeToChangelogFile: true
+  - include:
+      file: changes/16-inter-lab-agreements-schema.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/17-add-test-type-field.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/18-add-agreement-patient-price.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/19-add-lab-test-partner-lab.sql
+      relativeToChangelogFile: true
+  - include:
+      file: changes/20-add-test-result-status.sql
+      relativeToChangelogFile: true

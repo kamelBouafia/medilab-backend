@@ -32,7 +32,7 @@ public interface RequisitionRepository extends JpaRepository<Requisition, Long>,
         @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests WHERE r.lab.id = :labId")
         List<Requisition> findByLabIdWithTests(Long labId);
 
-        @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests LEFT JOIN FETCH r.testResults WHERE r.id = :id AND (r.lab.id = :labId OR r.lab.parentLab.id = :labId)")
+        @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests LEFT JOIN FETCH r.testResults WHERE r.id = :id AND (r.lab.id = :labId OR r.lab.parentLab.id = :labId OR EXISTS (SELECT t FROM r.tests t WHERE t.partnerLab.id = :labId))")
         Optional<Requisition> findByIdAndHierarchicalLabIdWithTestsAndResults(Long id, Long labId);
 
         @Query("SELECT r FROM Requisition r LEFT JOIN FETCH r.tests LEFT JOIN FETCH r.testResults WHERE r.patient.id = :patientId AND (r.lab.id = :labId OR r.lab.parentLab.id = :labId)")
@@ -72,4 +72,13 @@ public interface RequisitionRepository extends JpaRepository<Requisition, Long>,
                         "ORDER BY CAST(r.date AS LocalDate) ASC")
         List<DailyVolumeDto> findDailyRequestVolume(Long labId,
                         java.time.OffsetDateTime start, java.time.OffsetDateTime end);
+
+        @Query("SELECT DISTINCT r FROM Requisition r JOIN r.tests t " +
+                        "WHERE t.partnerLab.id = :labId " +
+                        "AND (:q is null OR :q = '' OR lower(r.patient.name) LIKE lower(concat('%', :q, '%')) OR CAST(r.id AS string) LIKE concat('%', :q, '%'))")
+        Page<Requisition> findIncomingRequests(Long labId, String q, Pageable pageable);
+
+        @Query("SELECT COUNT(DISTINCT r) FROM Requisition r JOIN r.tests t LEFT JOIN r.testResults tr " +
+                        "WHERE t.partnerLab.id = :labId AND (tr.status IS NULL OR tr.status NOT IN (com.medilab.enums.TestResultStatus.FINALIZED, com.medilab.enums.TestResultStatus.CANCELLED))")
+        long countIncomingRequests(Long labId);
 }

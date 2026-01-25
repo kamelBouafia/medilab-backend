@@ -88,18 +88,43 @@ public class TestResultService {
         if (labTest == null)
             return null;
 
+        // Ownership and Editability Check
+        boolean isProvider = (labTest.getType() == com.medilab.enums.TestType.IN_HOUSE
+                && requisition.getLab().getId().equals(lab.getId()))
+                || (labTest.getType() == com.medilab.enums.TestType.OUTSOURCED && labTest.getPartnerLab() != null
+                        && labTest.getPartnerLab().getId().equals(lab.getId()));
+
+        if (!isProvider) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "You are not authorized to enter results for test: " + labTest.getName());
+        }
+
         TestResult testResult = existingMap.getOrDefault(dto.getTestId(), new TestResult());
+
+        if (testResult.getId() != null) {
+            if (testResult.getStatus() == com.medilab.enums.TestResultStatus.FINALIZED ||
+                    testResult.getStatus() == com.medilab.enums.TestResultStatus.CANCELLED) {
+                throw new IllegalStateException("Cannot edit a finalized or cancelled test result.");
+            }
+        }
 
         if (testResult.getId() == null) {
             testResult.setRequisition(requisition);
             testResult.setTest(labTest);
             testResult.setLab(lab);
             testResult.setEnteredBy(enteredBy);
+            testResult.setStatus(com.medilab.enums.TestResultStatus.RESULT_ENTERED);
             auditLogService.logAction("TEST_RESULT_ENTERED",
                     String.format("Test '%s' result entered: %s", labTest.getName(), dto.getResultValue()));
-        } else if (!testResult.getResultValue().equals(dto.getResultValue())) {
-            auditLogService.logAction("TEST_RESULT_UPDATED", String.format("Test '%s' result changed from '%s' to '%s'",
-                    labTest.getName(), testResult.getResultValue(), dto.getResultValue()));
+        } else {
+            if (!testResult.getResultValue().equals(dto.getResultValue())) {
+                auditLogService.logAction("TEST_RESULT_UPDATED",
+                        String.format("Test '%s' result changed from '%s' to '%s'",
+                                labTest.getName(), testResult.getResultValue(), dto.getResultValue()));
+            }
+            if (dto.getStatus() != null) {
+                testResult.setStatus(dto.getStatus());
+            }
         }
 
         testResult.setResultValue(dto.getResultValue());
@@ -112,9 +137,10 @@ public class TestResultService {
 
     private void updateRequisitionStatusIfComplete(Requisition requisition, List<TestResult> savedResults) {
         long totalTests = requisition.getTests().size();
-        long completedTests = testResultRepository.countByRequisitionId(requisition.getId());
+        long finalizedTests = testResultRepository.countByRequisitionIdAndStatus(requisition.getId(),
+                com.medilab.enums.TestResultStatus.FINALIZED);
 
-        if (totalTests == completedTests) {
+        if (totalTests == finalizedTests) {
             requisition.setStatus(SampleStatus.COMPLETED);
             requisition.setCompletionDate(LocalDateTime.now());
             requisitionRepository.save(requisition);

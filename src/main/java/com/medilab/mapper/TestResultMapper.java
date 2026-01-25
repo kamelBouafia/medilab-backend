@@ -18,6 +18,8 @@ public interface TestResultMapper {
     @Mapping(source = "test.maxVal", target = "testMaxVal")
     @Mapping(source = "test.criticalMinVal", target = "testCriticalMinVal")
     @Mapping(source = "test.criticalMaxVal", target = "testCriticalMaxVal")
+    @Mapping(source = "test.type", target = "testType")
+    @Mapping(source = "test.partnerLab.name", target = "partnerLabName")
     @Mapping(source = "enteredBy.id", target = "enteredById")
     TestResultDto toDto(TestResult testResult);
 

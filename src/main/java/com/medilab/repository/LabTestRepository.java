@@ -1,6 +1,7 @@
 package com.medilab.repository;
 
 import com.medilab.entity.LabTest;
+import com.medilab.enums.TestType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -21,6 +22,12 @@ public interface LabTestRepository extends JpaRepository<LabTest, Long>, JpaSpec
 
     Optional<LabTest> findByGlobalTestIdAndLabId(Long globalTestId, Long labId);
 
+    Optional<LabTest> findByLabIdAndGlobalTestIdAndType(Long labId, Long globalTestId, TestType type);
+
+    Optional<LabTest> findByLabIdAndCodeAndType(Long labId, String code, TestType type);
+
     @Query("SELECT lt FROM LabTest lt LEFT JOIN FETCH lt.referenceRanges WHERE lt.id IN :ids")
     List<LabTest> findByIdInWithReferenceRanges(@Param("ids") Set<Long> ids);
+
+    List<LabTest> findByLabId(Long labId);
 }

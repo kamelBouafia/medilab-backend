@@ -14,7 +14,18 @@ public abstract class RequisitionMapper {
     @Mapping(source = "lab.id", target = "labId")
     @Mapping(source = "lab.name", target = "labName")
     @Mapping(target = "tests", ignore = true)
+    @Mapping(target = "testIds", ignore = true)
+    @Mapping(target = "hasOutsourcedTests", ignore = true)
     public abstract RequisitionDto toDto(Requisition requisition);
+
+    @org.mapstruct.AfterMapping
+    protected void setHasOutsourcedTests(Requisition requisition, @org.mapstruct.MappingTarget RequisitionDto dto) {
+        if (requisition.getTests() != null) {
+            boolean hasOutsourced = requisition.getTests().stream()
+                    .anyMatch(t -> t.getType() == com.medilab.enums.TestType.OUTSOURCED);
+            dto.setHasOutsourcedTests(hasOutsourced);
+        }
+    }
 
     @Mapping(target = "patient", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
@@ -22,5 +33,6 @@ public abstract class RequisitionMapper {
     @Mapping(target = "tests", ignore = true)
     @Mapping(target = "completionDate", ignore = true)
     @Mapping(target = "date", ignore = true)
+    @Mapping(target = "testResults", ignore = true)
     public abstract Requisition toEntity(RequisitionDto dto);
 }

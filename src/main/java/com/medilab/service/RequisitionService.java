@@ -9,7 +9,6 @@ import com.medilab.entity.SampleStatus;
 import com.medilab.entity.TestResult;
 import com.medilab.exception.ResourceNotFoundException;
 import com.medilab.mapper.RequisitionMapper;
-import com.medilab.mapper.TestResultMapper;
 import com.medilab.repository.*;
 import com.medilab.security.AuthenticatedUser;
 import com.medilab.security.SecurityUtils;
@@ -47,7 +46,6 @@ public class RequisitionService {
     private final LabRepository labRepository;
     private final LabTestRepository labTestRepository;
     private final RequisitionMapper requisitionMapper;
-    private final TestResultMapper testResultMapper;
     private final NotificationProducerService notificationProducerService;
     private final MinIOService minIOService;
 
@@ -68,8 +66,19 @@ public class RequisitionService {
             }
         }
 
+        if (params.containsKey("type") && "incoming".equals(params.getFirst("type"))) {
+            return requisitionRepository.findIncomingRequests(user.getLabId(), q, pageable)
+                    .map(requisitionMapper::toDto);
+        }
+
         Specification<Requisition> spec = createSpecification(user, q, params);
         return requisitionRepository.findAll(spec, pageable).map(requisitionMapper::toDto);
+    }
+
+    @Transactional(readOnly = true)
+    public long getIncomingRequestsCount() {
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+        return requisitionRepository.countIncomingRequests(user.getLabId());
     }
 
     private Specification<Requisition> createSpecification(AuthenticatedUser user, String q,
@@ -201,6 +210,13 @@ public class RequisitionService {
             throw new IllegalStateException("Cannot change status of a completed or cancelled requisition.");
         }
 
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+        // Only requesting lab can cancel
+        if (newStatus == SampleStatus.CANCELLED && !requisition.getLab().getId().equals(user.getLabId())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Only the requesting lab can cancel this requisition.");
+        }
+
         requisition.setStatus(newStatus);
         if (newStatus == SampleStatus.COMPLETED) {
             requisition.setCompletionDate(LocalDateTime.now());
@@ -274,13 +290,22 @@ public class RequisitionService {
                 .orElse(Collections.emptyList()).stream()
                 .collect(Collectors.toMap(r -> r.getTest().getId(), r -> r));
 
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+        Long currentLabId = user.getLabId();
+        boolean isRequesterLab = requisition.getLab().getId().equals(currentLabId);
+
         return tests.stream()
+                .filter(test -> {
+                    if (isRequesterLab)
+                        return true;
+                    // For providing labs, only show tests they are responsible for
+                    return test.getType() == com.medilab.enums.TestType.OUTSOURCED &&
+                            test.getPartnerLab() != null &&
+                            test.getPartnerLab().getId().equals(currentLabId);
+                })
                 .map(test -> {
                     TestResult result = resultsMap.get(test.getId());
-                    if (result != null) {
-                        return testResultMapper.toDto(result);
-                    }
-                    return TestResultDto.builder()
+                    TestResultDto.TestResultDtoBuilder builder = TestResultDto.builder()
                             .requisitionId(requisitionId)
                             .testId(test.getId())
                             .testName(test.getName())
@@ -291,8 +316,43 @@ public class RequisitionService {
                             .testMaxVal(test.getMaxVal())
                             .testCriticalMinVal(test.getCriticalMinVal())
                             .testCriticalMaxVal(test.getCriticalMaxVal())
-                            .build();
+                            .testType(test.getType())
+                            .partnerLabName(test.getPartnerLab() != null ? test.getPartnerLab().getName() : null)
+                            .requestingLabName(requisition.getLab().getName());
+
+                    com.medilab.enums.TestResultStatus status = result != null ? result.getStatus()
+                            : com.medilab.enums.TestResultStatus.REQUESTED;
+                    builder.status(status);
+
+                    boolean isProvider = (test.getType() == com.medilab.enums.TestType.IN_HOUSE
+                            && requisition.getLab().getId().equals(currentLabId))
+                            || (test.getType() == com.medilab.enums.TestType.OUTSOURCED && test.getPartnerLab() != null
+                                    && test.getPartnerLab().getId().equals(currentLabId));
+
+                    boolean isRequester = requisition.getLab().getId().equals(currentLabId);
+
+                    // Visibility logic
+                    if (result != null) {
+                        builder.id(result.getId());
+                        builder.enteredById(result.getEnteredBy().getId());
+                        builder.flag(result.getFlag());
+
+                        if (isProvider || (isRequester
+                                && status.ordinal() >= com.medilab.enums.TestResultStatus.RESULT_ENTERED.ordinal())) {
+                            builder.resultValue(result.getResultValue());
+                            builder.interpretation(result.getInterpretation());
+                        } else {
+                            builder.resultValue("PENDING"); // Placeholder for requester when not yet ready
+                        }
+                    }
+
+                    // Editability logic
+                    boolean canEdit = isProvider && status != com.medilab.enums.TestResultStatus.FINALIZED
+                            && status != com.medilab.enums.TestResultStatus.CANCELLED;
+                    builder.canEdit(canEdit);
+
+                    return builder.build();
                 })
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
     }
 }

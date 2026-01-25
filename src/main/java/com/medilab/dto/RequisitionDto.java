@@ -35,4 +35,5 @@ public class RequisitionDto {
     private String labName;
     private String pdfObjectPath;
     private String pdfGeneratedAt;
+    private boolean hasOutsourcedTests;
 }
