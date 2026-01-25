@@ -75,7 +75,7 @@ public interface RequisitionRepository extends JpaRepository<Requisition, Long>,
 
         @Query("SELECT DISTINCT r FROM Requisition r JOIN r.tests t " +
                         "WHERE t.partnerLab.id = :labId " +
-                        "AND (:q IS NULL OR lower(r.patient.name) LIKE lower(concat('%', :q, '%')) OR CAST(r.id AS string) LIKE concat('%', :q, '%'))")
+                        "AND (:q is null OR :q = '' OR lower(r.patient.name) LIKE lower(concat('%', :q, '%')) OR CAST(r.id AS string) LIKE concat('%', :q, '%'))")
         Page<Requisition> findIncomingRequests(Long labId, String q, Pageable pageable);
 
         @Query("SELECT COUNT(DISTINCT r) FROM Requisition r JOIN r.tests t LEFT JOIN r.testResults tr " +

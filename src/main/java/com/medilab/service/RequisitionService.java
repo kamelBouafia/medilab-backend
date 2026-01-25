@@ -210,6 +210,13 @@ public class RequisitionService {
             throw new IllegalStateException("Cannot change status of a completed or cancelled requisition.");
         }
 
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+        // Only requesting lab can cancel
+        if (newStatus == SampleStatus.CANCELLED && !requisition.getLab().getId().equals(user.getLabId())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Only the requesting lab can cancel this requisition.");
+        }
+
         requisition.setStatus(newStatus);
         if (newStatus == SampleStatus.COMPLETED) {
             requisition.setCompletionDate(LocalDateTime.now());
