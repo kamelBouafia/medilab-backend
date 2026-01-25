@@ -33,6 +33,11 @@ public class RequisitionController {
         return ResponseEntity.ok(requisitionPage);
     }
 
+    @GetMapping("/incoming/count")
+    public ResponseEntity<Long> getIncomingRequestsCount() {
+        return ResponseEntity.ok(requisitionService.getIncomingRequestsCount());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<RequisitionDto> getRequisitionById(@PathVariable Long id) {
         RequisitionDto requisitionDto = requisitionService.getRequisitionById(id);
@@ -48,7 +53,8 @@ public class RequisitionController {
     @PatchMapping("/{requisitionId}/status")
     public ResponseEntity<RequisitionDto> updateRequisitionStatus(@PathVariable Long requisitionId,
             @Valid @RequestBody UpdateRequisitionStatusDto statusDto) {
-        RequisitionDto updatedRequisition = requisitionService.updateRequisitionStatus(requisitionId, statusDto.getStatus());
+        RequisitionDto updatedRequisition = requisitionService.updateRequisitionStatus(requisitionId,
+                statusDto.getStatus());
         return ResponseEntity.ok(updatedRequisition);
     }
 

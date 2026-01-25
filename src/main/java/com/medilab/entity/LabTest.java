@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import com.medilab.enums.TestCategory;
 import com.medilab.enums.TestUnit;
+import com.medilab.enums.TestType;
 import java.util.List;
 
 @Entity
@@ -30,6 +31,10 @@ public class LabTest {
 
     @Enumerated(EnumType.STRING)
     private TestCategory category;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private TestType type = TestType.IN_HOUSE;
 
     @Enumerated(EnumType.STRING)
     private TestUnit unit;
@@ -54,4 +59,8 @@ public class LabTest {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lab_id", nullable = false)
     private Lab lab;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "partner_lab_id")
+    private Lab partnerLab;
 }
