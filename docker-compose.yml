@@ -19,10 +19,9 @@ services:
             retries: 5
 
     backend:
-        build: .
-        # ports:
-        #   - "8080:8080"
-        #   - "5005:5005"
+        build:
+            context: .
+            dockerfile: Dockerfile.dev
         environment:
             - GOOGLE_API_KEY=${GOOGLE_API_KEY:-placeholder}
             - DB_URL=jdbc:postgresql://postgres:5432/medilab_db
@@ -32,7 +31,6 @@ services:
             - RABBITMQ_PORT=5672
             - RABBITMQ_USERNAME=guest
             - RABBITMQ_PASSWORD=guest
-            - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Dliquibase.duplicateFileMode=WARN
             - LIQUIBASE_DUPLICATE_FILE_MODE=WARN
             - MINIO_ENDPOINT=http://minio:9000
             - MINIO_ACCESS_KEY=minioadmin
@@ -40,9 +38,8 @@ services:
             - MINIO_BUCKET_NAME=medilab-reports
             - MINIO_PUBLIC_ENDPOINT=${PUBLIC_URL:-http://localhost}
         volumes:
-            - ./target/classes:/app/classes
-            - ./src/main/resources:/app/resources
-        # DevTools will handle reactivation when these volumes are updated.
+            - ./src:/app/src
+            - ./pom.xml:/app/pom.xml
         depends_on:
             postgres:
                 condition: service_healthy
@@ -56,8 +53,7 @@ services:
     notification:
         build:
             context: ./services/notification-service
-        # ports:
-        #   - "8081:8081"
+            dockerfile: Dockerfile.dev
         environment:
             - RABBITMQ_HOST=rabbitmq
             - RABBITMQ_PORT=5672
@@ -67,10 +63,9 @@ services:
             - MAIL_PORT=587
             - MAIL_USERNAME=ko.mail.sender@gmail.com
             - MAIL_PASSWORD=wscidfgsuzgtmmuo
-            - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006
         volumes:
-            - ./services/notification-service/target/classes:/app/classes
-            - ./services/notification-service/src/main/resources:/app/resources
+            - ./services/notification-service/src:/app/src
+            - ./services/notification-service/pom.xml:/app/pom.xml
         depends_on:
             - rabbitmq
         networks:
@@ -80,7 +75,7 @@ services:
         build:
             context: ../medilab-pro-frontend
         ports:
-            - "80:80"
+            - "3000:3000"
         depends_on:
             - backend
         networks:
@@ -89,21 +84,12 @@ services:
     rabbitmq:
         image: rabbitmq:3-management-alpine
         container_name: medilab-rabbitmq
-        # ports:
-        #   - "5672:5672"
-        #   - "15672:15672"
-        environment:
-            - RABBITMQ_DEFAULT_USER=guest
-            - RABBITMQ_DEFAULT_PASS=guest
         networks:
             - medilab-network
 
     minio:
         image: minio/minio:latest
         container_name: medilab-minio
-        # ports:
-        #   - "9000:9000"
-        #   - "9001:9001"
         environment:
             - MINIO_ROOT_USER=minioadmin
             - MINIO_ROOT_PASSWORD=minioadmin
