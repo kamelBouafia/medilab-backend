@@ -90,8 +90,8 @@ public class SupportNotificationTest {
                 .build());
 
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(
-                staff.getId(), lab.getId(), staff.getUsername(), staff.getPassword(),
-                Collections.emptyList(), "staff", false);
+                staff.getId(), lab.getId(), null, staff.getUsername(), staff.getPassword(),
+                Collections.emptyList(), "staff", false, true, true, null);
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(authenticatedUser, null, authenticatedUser.getAuthorities()));
@@ -117,8 +117,8 @@ public class SupportNotificationTest {
     void whenPatientCreatesTicket_thenNotifyLabManager() throws Exception {
         // Given
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(
-                123L, lab.getId(), "test_patient", "password",
-                Collections.emptyList(), "patient", false);
+                123L, lab.getId(), null, "test_patient", "password",
+                Collections.emptyList(), "patient", false, true, true, null);
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(authenticatedUser, null, authenticatedUser.getAuthorities()));

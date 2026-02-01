@@ -41,6 +41,10 @@ public class TestResult {
     @Enumerated(EnumType.STRING)
     private TestResultFlag flag;
 
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private com.medilab.enums.TestResultStatus status = com.medilab.enums.TestResultStatus.RESULT_ENTERED;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "entered_by_id", nullable = false)
     private StaffUser enteredBy;

@@ -13,28 +13,32 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class WithMockAuthenticatedUserSecurityContextFactory
-        implements WithSecurityContextFactory<WithMockAuthenticatedUser> {
+                implements WithSecurityContextFactory<WithMockAuthenticatedUser> {
 
-    @Override
-    public SecurityContext createSecurityContext(WithMockAuthenticatedUser customUser) {
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        @Override
+        public SecurityContext createSecurityContext(WithMockAuthenticatedUser customUser) {
+                SecurityContext context = SecurityContextHolder.createEmptyContext();
 
-        List<GrantedAuthority> authorities = Arrays.stream(customUser.roles())
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                .collect(Collectors.toList());
+                List<GrantedAuthority> authorities = Arrays.stream(customUser.roles())
+                                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                                .collect(Collectors.toList());
 
-        AuthenticatedUser principal = new AuthenticatedUser(
-                customUser.id(),
-                customUser.labId(),
-                customUser.username(),
-                customUser.password(),
-                authorities,
-                "staff",
-                false);
+                AuthenticatedUser principal = new AuthenticatedUser(
+                                customUser.id(),
+                                customUser.labId(),
+                                null, // parentLabId
+                                customUser.username(),
+                                customUser.password(),
+                                authorities,
+                                "staff",
+                                false, // forcePasswordChange
+                                true, // gdprAccepted
+                                true, // enabled
+                                null); // trialEnd
 
-        Authentication auth = new UsernamePasswordAuthenticationToken(principal, "password",
-                principal.getAuthorities());
-        context.setAuthentication(auth);
-        return context;
-    }
+                Authentication auth = new UsernamePasswordAuthenticationToken(principal, "password",
+                                principal.getAuthorities());
+                context.setAuthentication(auth);
+                return context;
+        }
 }

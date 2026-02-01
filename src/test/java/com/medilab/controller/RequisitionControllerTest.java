@@ -87,8 +87,9 @@ public class RequisitionControllerTest {
                 // Set up the security context
                 AuthenticatedUser authenticatedUser = new AuthenticatedUser(staffUser1.getId(),
                                 staffUser1.getLab().getId(),
+                                null, // parentLabId
                                 staffUser1.getUsername(), staffUser1.getPassword(), Collections.emptyList(), "staff",
-                                false);
+                                false, true, true, null);
                 SecurityContextHolder.getContext().setAuthentication(
                                 new UsernamePasswordAuthenticationToken(authenticatedUser, null,
                                                 authenticatedUser.getAuthorities()));

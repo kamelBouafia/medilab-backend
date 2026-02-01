@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import com.medilab.enums.TestCategory;
 import com.medilab.enums.TestUnit;
+import com.medilab.enums.TestType;
 
 @Data
 @Builder
@@ -26,6 +27,8 @@ public class LabTestDto {
     @NotNull(message = "{validation.required}")
     private TestCategory category;
 
+    private TestType type;
+
     @NotNull(message = "{validation.required}")
     @PositiveOrZero(message = "{validation.positive}")
     private java.math.BigDecimal price;
@@ -37,4 +40,6 @@ public class LabTestDto {
     private Double criticalMaxVal;
     private String result;
     private String labName;
+    private String partnerLabName;
+    private String description;
 }
