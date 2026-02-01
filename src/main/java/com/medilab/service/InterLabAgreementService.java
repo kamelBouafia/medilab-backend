@@ -71,6 +71,29 @@ public class InterLabAgreementService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<LabTestDto> getAvailablePartnerTests(Long partnerLabId) {
+        AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
+
+        // Verify the partner lab exists
+        if (!labRepository.existsById(partnerLabId)) {
+            throw new ResourceNotFoundException("Partner lab not found");
+        }
+
+        // Get all tests from partner lab
+        List<LabTest> allTests = labTestRepository.findByLabId(partnerLabId);
+
+        // Get test IDs that already have active agreements
+        List<Long> existingTestIds = agreementRepository.findTestIdsWithActiveAgreements(
+                user.getLabId(), partnerLabId);
+
+        // Filter out tests with existing agreements
+        return allTests.stream()
+                .filter(test -> !existingTestIds.contains(test.getId()))
+                .map(labTestMapper::toDto)
+                .toList();
+    }
+
     @Transactional
     public InterLabAgreementDto createAgreementRequest(CreateAgreementRequestDto dto) {
         AuthenticatedUser user = SecurityUtils.getAuthenticatedUser();
@@ -93,12 +116,22 @@ public class InterLabAgreementService {
                 .orElseThrow(() -> new ResourceNotFoundException("Staff user not found"));
 
         // Validate all tests exist in partner lab's catalog
+        // AND check for duplicates with existing agreements
+        List<Long> existingTestIds = agreementRepository.findTestIdsWithActiveAgreements(
+                mainLab.getId(), partnerLab.getId());
+
         for (AgreementTestPriceDto testPrice : dto.getTestPrices()) {
             LabTest labTest = labTestRepository.findById(testPrice.getTestId())
                     .orElseThrow(() -> new ResourceNotFoundException("Test not found: " + testPrice.getTestId()));
 
             if (!labTest.getLab().getId().equals(partnerLab.getId())) {
                 throw new IllegalArgumentException("Test " + labTest.getName() + " is not available in partner lab");
+            }
+
+            // Check if this test already has an active agreement
+            if (existingTestIds.contains(labTest.getId())) {
+                throw new IllegalArgumentException(
+                        "Test " + labTest.getName() + " already has an active agreement with this lab");
             }
         }
 

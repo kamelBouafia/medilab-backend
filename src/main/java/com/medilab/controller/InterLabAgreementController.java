@@ -103,6 +103,6 @@ public class InterLabAgreementController {
     @GetMapping("/partner-tests/{labId}")
     @PreAuthorize("hasRole('Manager')")
     public ResponseEntity<List<LabTestDto>> getPartnerTests(@PathVariable Long labId) {
-        return ResponseEntity.ok(agreementService.getPartnerLabTests(labId));
+        return ResponseEntity.ok(agreementService.getAvailablePartnerTests(labId));
     }
 }
